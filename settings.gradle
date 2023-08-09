@@ -8,7 +8,7 @@ buildscript {
 
     dependencies {
         //noinspection DifferentKotlinGradleVersion
-        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.10"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0"
         classpath "gradle.plugin.com.hierynomus.gradle.plugins:license-gradle-plugin:0.16.1"
         classpath "io.freefair.gradle:lombok-plugin:6.6"
     }
@@ -22,3 +22,5 @@ include 'mybatis-plus-extension'
 include 'mybatis-plus-generator'
 include 'mybatis-plus-boot-starter'
 include 'mybatis-plus-boot-starter-test'
+include 'mybatis-plus-bom'
+

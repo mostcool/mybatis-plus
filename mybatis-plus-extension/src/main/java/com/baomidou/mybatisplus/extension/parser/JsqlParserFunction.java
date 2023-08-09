@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2022, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.baomidou.mybatisplus.extension.parser;
+
+import net.sf.jsqlparser.JSQLParserException;
+
 /**
- * SQL 解析相关类
+ * @author miemie
+ * @since 2023-08-05
  */
-package com.baomidou.mybatisplus.core.parser;
+@FunctionalInterface
+public interface JsqlParserFunction<T, R> {
+
+    R apply(T t) throws JSQLParserException;
+}

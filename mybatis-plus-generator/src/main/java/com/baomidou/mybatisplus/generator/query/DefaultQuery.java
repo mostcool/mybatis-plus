@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2022, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,10 +121,12 @@ public class DefaultQuery extends AbstractDatabaseQuery {
             String propertyName = entity.getNameConvert().propertyNameConvert(field);
             // 设置字段的元数据信息
             TableField.MetaInfo metaInfo = new TableField.MetaInfo(columnInfo, tableInfo);
-            IColumnType columnType = typeRegistry.getColumnType(metaInfo);
+            IColumnType columnType;
             ITypeConvertHandler typeConvertHandler = dataSourceConfig.getTypeConvertHandler();
             if (typeConvertHandler != null) {
                 columnType = typeConvertHandler.convert(globalConfig, typeRegistry, metaInfo);
+            } else {
+                columnType = typeRegistry.getColumnType(metaInfo);
             }
             field.setPropertyName(propertyName, columnType);
             field.setMetaInfo(metaInfo);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2022, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -295,7 +295,7 @@ public class OptimisticLockerInnerInterceptor implements InnerInterceptor {
         } else if (LocalDateTime.class.equals(clazz)) {
             return LocalDateTime.now();
         } else if (Instant.class.equals(clazz)) {
-            return LocalDateTime.now();
+            return Instant.now();
         }
         //not supported type, return original val.
         return originalVersionVal;

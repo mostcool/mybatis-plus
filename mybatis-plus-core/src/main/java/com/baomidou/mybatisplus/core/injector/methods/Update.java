@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2022, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class Update extends AbstractMethod {
         String sql = String.format(sqlMethod.getSql(), tableInfo.getTableName(),
             sqlSet(true, true, tableInfo, true, ENTITY, ENTITY_DOT),
             sqlWhereEntityWrapper(true, tableInfo), sqlComment());
-        SqlSource sqlSource = languageDriver.createSqlSource(configuration, sql, modelClass);
+        SqlSource sqlSource = super.createSqlSource(configuration, sql, modelClass);
         return this.addUpdateMappedStatement(mapperClass, modelClass, methodName, sqlSource);
     }
 }

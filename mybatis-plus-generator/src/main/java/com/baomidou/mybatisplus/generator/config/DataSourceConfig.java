@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2022, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -175,6 +175,8 @@ public class DataSourceConfig {
             return DbType.SQLITE;
         } else if (str.contains(":h2:")) {
             return DbType.H2;
+        } else if (str.contains(":lealone:")) {
+            return DbType.LEALONE;
         } else if (str.contains(":kingbase:") || str.contains(":kingbase8:")) {
             return DbType.KINGBASE_ES;
         } else if (str.contains(":dm:")) {

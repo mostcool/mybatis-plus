@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2022, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,6 +118,8 @@ public enum DbType {
      */
     @Deprecated
     GBASE_INFORMIX("gbase 8s", "南大通用数据库 GBase 8s"),
+
+    SINODB("sinodb","星瑞格数据库"),
     /**
      * Oscar
      */
@@ -134,7 +136,6 @@ public enum DbType {
      * Firebird
      */
     FIREBIRD("Firebird", "Firebird 数据库"),
-
     /**
      * HighGo
      */
@@ -143,7 +144,6 @@ public enum DbType {
      * CUBRID
      */
     CUBRID("cubrid", "CUBRID数据库"),
-
     /**
      * GOLDILOCKS
      */
@@ -172,12 +172,10 @@ public enum DbType {
      * redshift
      */
     REDSHIFT("redshift", "亚马逊redshift数据库"),
-
     /**
      * openGauss
      */
     OPENGAUSS("openGauss", "华为 opengauss 数据库"),
-
     /**
      * TDengine
      */
@@ -186,12 +184,14 @@ public enum DbType {
      * Informix
      */
     INFORMIX("informix", "Informix数据库"),
-
     /**
      * uxdb
      */
     UXDB("uxdb", "优炫数据库"),
-
+    /**
+     * lealone
+     */
+    LEALONE("lealone", "Lealone数据库"),
     /**
      * UNKNOWN DB
      */

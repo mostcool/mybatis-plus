@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2022, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.baomidou.mybatisplus.generator.config;
+
+import java.io.File;
+
 /**
- * COUNT SQL 优化相关类
+ * 输出文件接口
+ *
+ * @author hubin
+ * @since 2023-08-04
  */
-package com.baomidou.mybatisplus.extension.plugins.pagination.optimize;
+public interface IOutputFile {
+
+    /**
+     * 创建文件
+     *
+     * @param filePath   默认文件路径
+     * @param outputFile 输出文件类型
+     * @return
+     */
+    File createFile(String filePath, OutputFile outputFile);
+}

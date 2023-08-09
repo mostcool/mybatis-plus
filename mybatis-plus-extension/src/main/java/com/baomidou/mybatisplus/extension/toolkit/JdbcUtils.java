@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2022, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,6 +85,8 @@ public class JdbcUtils {
             return DbType.SQLITE;
         } else if (url.contains(":h2:")) {
             return DbType.H2;
+        } else if (url.contains(":lealone:")) {
+            return DbType.LEALONE;
         } else if (regexFind(":dm\\d*:", url)) {
             return DbType.DM;
         } else if (url.contains(":xugu:")) {
@@ -133,6 +135,8 @@ public class JdbcUtils {
             return DbType.TDENGINE;
         } else if (url.contains(":informix")) {
             return DbType.INFORMIX;
+        } else if (url.contains(":sinodb")) {
+            return DbType.SINODB;
         } else if (url.contains(":uxdb:")) {
             return DbType.UXDB;
         } else {

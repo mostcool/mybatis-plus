@@ -26,14 +26,19 @@ Mybatis 增强工具包 - 只做增强不做改变，简化`CRUD`操作
 
 添加 `微信 wx153666` 备注进 mp 群
 
+> 不允许非法项目使用，后果自负
+
 # 特别用户
 
 <p>
   <a href="https://www.diboot.com/?from=mp" target="_blank">
-   <img alt="Mybatis-Plus-Logo" src="https://www.diboot.com/diboot_slogon.png" width="210px" height="75px">
+   <img alt="DiBoot-Logo" src="https://www.diboot.com/diboot_slogon.png" width="160px" height="50px">
   </a>
   <a href="http://aizuda.com/?from=mp" target="_blank">
-   <img alt="Mybatis-Plus-Logo" src="https://baomidou.com/img/aizuda.png" width="210px" height="75px">
+   <img alt="Mybatis-Plus-Logo" src="https://foruda.gitee.com/images/1685339582501163828/763d3037_12260.png" width="160px" height="50px">
+  </a>
+  <a href="http://github.crmeb.net/u/MyBatis-Plus" target="_blank">
+   <img alt="Crmeb-Logo" src="https://foruda.gitee.com/images/1685339553088166856/b0a6b1a4_12260.gif" width="160px" height="50px">
   </a>
 </p>
 

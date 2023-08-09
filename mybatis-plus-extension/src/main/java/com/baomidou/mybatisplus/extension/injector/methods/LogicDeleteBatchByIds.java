@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2022, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ import static java.util.stream.Collectors.toList;
  * @author nieqiurong
  * @since 3.5.0
  */
+@SuppressWarnings("serial")
 public class LogicDeleteBatchByIds extends DeleteBatchByIds {
 
     public LogicDeleteBatchByIds() {

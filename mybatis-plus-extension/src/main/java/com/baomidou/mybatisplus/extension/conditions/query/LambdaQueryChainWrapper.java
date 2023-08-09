@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2022, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.baomidou.mybatisplus.core.toolkit.ExceptionUtils;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 import com.baomidou.mybatisplus.extension.conditions.AbstractChainWrapper;
 
+import java.util.List;
 import java.util.function.Predicate;
 
 /**
@@ -59,10 +60,9 @@ public class LambdaQueryChainWrapper<T> extends AbstractChainWrapper<T, SFunctio
         super.wrapperChildren = new LambdaQueryWrapper<>(entityClass);
     }
 
-    @SafeVarargs
     @Override
-    public final LambdaQueryChainWrapper<T> select(SFunction<T, ?>... columns) {
-        wrapperChildren.select(columns);
+    public LambdaQueryChainWrapper<T> select(boolean condition, List<SFunction<T, ?>> columns) {
+        wrapperChildren.select(condition, columns);
         return typedThis;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2022, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ public class DbQueryRegistry {
         db_query_enum_map.put(DbType.DB2, new DB2Query());
         db_query_enum_map.put(DbType.MARIADB, new MariadbQuery());
         db_query_enum_map.put(DbType.H2, new H2Query());
+        db_query_enum_map.put(DbType.LEALONE, new H2Query());
         db_query_enum_map.put(DbType.SQLITE, new SqliteQuery());
         db_query_enum_map.put(DbType.DM, new DMQuery());
         db_query_enum_map.put(DbType.KINGBASE_ES, new KingbaseESQuery());
