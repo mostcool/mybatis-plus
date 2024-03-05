@@ -23,8 +23,8 @@ import org.apache.ibatis.session.SqlSession;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * 继承至MapperRegistry
@@ -35,7 +35,8 @@ import java.util.Map;
 public class MybatisMapperRegistry extends MapperRegistry {
 
     private final Configuration config;
-    private final Map<Class<?>, MybatisMapperProxyFactory<?>> knownMappers = new HashMap<>();
+
+    private final Map<Class<?>, MybatisMapperProxyFactory<?>> knownMappers = new ConcurrentHashMap<>();
 
     public MybatisMapperRegistry(Configuration config) {
         super(config);
@@ -45,7 +46,6 @@ public class MybatisMapperRegistry extends MapperRegistry {
     @SuppressWarnings("unchecked")
     @Override
     public <T> T getMapper(Class<T> type, SqlSession sqlSession) {
-        // TODO 这里换成 MybatisMapperProxyFactory 而不是 MapperProxyFactory
         // fix https://github.com/baomidou/mybatis-plus/issues/4247
         MybatisMapperProxyFactory<T> mapperProxyFactory = (MybatisMapperProxyFactory<T>) knownMappers.get(type);
         if (mapperProxyFactory == null) {
@@ -77,19 +77,15 @@ public class MybatisMapperRegistry extends MapperRegistry {
     public <T> void addMapper(Class<T> type) {
         if (type.isInterface()) {
             if (hasMapper(type)) {
-                // TODO 如果之前注入 直接返回
                 return;
-                // TODO 这里就不抛异常了
 //                throw new BindingException("Type " + type + " is already known to the MapperRegistry.");
             }
             boolean loadCompleted = false;
             try {
-                // TODO 这里也换成 MybatisMapperProxyFactory 而不是 MapperProxyFactory
                 knownMappers.put(type, new MybatisMapperProxyFactory<>(type));
                 // It's important that the type is added before the parser is run
                 // otherwise the binding may automatically be attempted by the
                 // mapper parser. If the type is already known, it won't try.
-                // TODO 这里也换成 MybatisMapperAnnotationBuilder 而不是 MapperAnnotationBuilder
                 MybatisMapperAnnotationBuilder parser = new MybatisMapperAnnotationBuilder(config, type);
                 parser.parse();
                 loadCompleted = true;
@@ -108,4 +104,5 @@ public class MybatisMapperRegistry extends MapperRegistry {
     public Collection<Class<?>> getMappers() {
         return Collections.unmodifiableCollection(knownMappers.keySet());
     }
+
 }

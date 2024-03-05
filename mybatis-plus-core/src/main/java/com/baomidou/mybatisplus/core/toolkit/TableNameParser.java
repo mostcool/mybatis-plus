@@ -15,14 +15,20 @@
  */
 package com.baomidou.mybatisplus.core.toolkit;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * SQL 表名解析
  * <p>
- * https://github.com/mnadeem/sql-table-name-parser
+ * <a href="https://github.com/mnadeem/sql-table-name-parser">...</a>
  * <p>
  * Ultra light, Ultra fast parser to extract table name out SQLs, supports oracle dialect SQLs as well.
  * USE: new TableNameParser(sql).tables()
@@ -45,9 +51,10 @@ public final class TableNameParser {
     private static final String KEYWORD_FROM = "from";
     private static final String KEYWORD_USING = "using";
     private static final String KEYWORD_UPDATE = "update";
+    private static final String KEYWORD_STRAIGHT_JOIN = "straight_join";
     private static final String KEYWORD_DUPLICATE = "duplicate";
 
-    private static final List<String> concerned = Arrays.asList(KEYWORD_TABLE, KEYWORD_INTO, KEYWORD_JOIN, KEYWORD_USING, KEYWORD_UPDATE);
+    private static final List<String> concerned = Arrays.asList(KEYWORD_TABLE, KEYWORD_INTO, KEYWORD_JOIN, KEYWORD_USING, KEYWORD_UPDATE, KEYWORD_STRAIGHT_JOIN);
     private static final List<String> ignored = Arrays.asList(StringPool.LEFT_BRACKET, TOKEN_SET, TOKEN_OF, TOKEN_DUAL);
 
     /**
@@ -61,7 +68,7 @@ public final class TableNameParser {
      * 5、把 ,() 也要分出来
      */
     private static final Pattern NON_SQL_TOKEN_PATTERN = Pattern.compile("(--[^\\v]+)|;|(\\s+)|((?s)/[*].*?[*]/)"
-            + "|(((\\b|\\B)(?=[,()]))|((?<=[,()])(\\b|\\B)))"
+        + "|(((\\b|\\B)(?=[,()]))|((?<=[,()])(\\b|\\B)))"
     );
 
     private final List<SqlToken> tokens;
@@ -123,7 +130,7 @@ public final class TableNameParser {
      * @param sql SQL
      * @return 语句
      */
-    protected List<SqlToken> fetchAllTokens(String sql) {
+    private List<SqlToken> fetchAllTokens(String sql) {
         List<SqlToken> tokens = new ArrayList<>();
         Matcher matcher = NON_SQL_TOKEN_PATTERN.matcher(sql);
         int last = 0;

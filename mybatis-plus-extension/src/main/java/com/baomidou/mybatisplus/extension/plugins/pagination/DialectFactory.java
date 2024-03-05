@@ -46,8 +46,7 @@ public class DialectFactory {
                 || dbType == DbType.CLICK_HOUSE
                 || dbType == DbType.OCEAN_BASE
                 || dbType == DbType.CUBRID
-                || dbType == DbType.GOLDILOCKS
-                || dbType == DbType.CSIIDB) {
+                || dbType == DbType.SUNDB) {
                 dialect = new MySqlDialect();
             }
             // oracle same type
@@ -71,7 +70,9 @@ public class DialectFactory {
                 || dbType == DbType.REDSHIFT
                 || dbType == DbType.OPENGAUSS
                 || dbType == DbType.TDENGINE
-                || dbType == DbType.UXDB) {
+                || dbType == DbType.UXDB
+                || dbType == DbType.GBASE8S_PG
+                || dbType == DbType.GBASE_8C) {
                 dialect = new PostgreDialect();
             }
             // other types
@@ -94,6 +95,9 @@ public class DialectFactory {
                 dialect = new GBase8sDialect();
             } else if (dbType == DbType.INFORMIX) {
                 dialect = new InformixDialect();
+            } else if (dbType == DbType.TRINO
+                || dbType == DbType.PRESTO) {
+                dialect = new TrinoDialect();
             }
             DIALECT_ENUM_MAP.put(dbType, dialect);
         }

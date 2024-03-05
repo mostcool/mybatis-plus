@@ -19,7 +19,7 @@ import com.baomidou.mybatisplus.core.conditions.update.Update
 import com.baomidou.mybatisplus.core.mapper.BaseMapper
 import com.baomidou.mybatisplus.extension.conditions.AbstractChainWrapper
 import com.baomidou.mybatisplus.extension.conditions.update.ChainUpdate
-import kotlin.reflect.KMutableProperty1
+import kotlin.reflect.KProperty1
 
 /**
  * @author FlyInWind
@@ -27,9 +27,9 @@ import kotlin.reflect.KMutableProperty1
  */
 @Suppress("serial")
 open class KtUpdateChainWrapper<T : Any>(
-    internal val baseMapper: BaseMapper<T>
-) : AbstractChainWrapper<T, KMutableProperty1<T, *>, KtUpdateChainWrapper<T>, KtUpdateWrapper<T>>(),
-    ChainUpdate<T>, Update<KtUpdateChainWrapper<T>, KMutableProperty1<T, *>> {
+    internal val baseMapper: BaseMapper<T>?
+) : AbstractChainWrapper<T, KProperty1<in T, *>, KtUpdateChainWrapper<T>, KtUpdateWrapper<T>>(),
+    ChainUpdate<T>, Update<KtUpdateChainWrapper<T>, KProperty1<in T, *>> {
 
     constructor(baseMapper: BaseMapper<T>, entityClass: Class<T>) : this(baseMapper) {
         super.wrapperChildren = KtUpdateWrapper(entityClass)
@@ -39,7 +39,16 @@ open class KtUpdateChainWrapper<T : Any>(
         super.wrapperChildren = KtUpdateWrapper(entity)
     }
 
-    override fun set(condition: Boolean, column: KMutableProperty1<T, *>, value: Any?, mapping: String?): KtUpdateChainWrapper<T> {
+    constructor(entityClass: Class<T>) : this(null) {
+        super.wrapperChildren = KtUpdateWrapper(entityClass)
+    }
+
+    constructor(entity: T) : this(null) {
+        super.wrapperChildren = KtUpdateWrapper(entity)
+        super.setEntityClass(entity.javaClass)
+    }
+
+    override fun set(condition: Boolean, column: KProperty1<in T, *>, value: Any?, mapping: String?): KtUpdateChainWrapper<T> {
         wrapperChildren.set(condition, column, value, mapping)
         return typedThis
     }
@@ -49,7 +58,7 @@ open class KtUpdateChainWrapper<T : Any>(
         return typedThis
     }
 
-    override fun getBaseMapper(): BaseMapper<T> {
+    override fun getBaseMapper(): BaseMapper<T>? {
         return baseMapper
     }
 

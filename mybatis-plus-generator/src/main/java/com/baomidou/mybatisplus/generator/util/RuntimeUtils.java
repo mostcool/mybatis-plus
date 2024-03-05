@@ -18,6 +18,7 @@ package com.baomidou.mybatisplus.generator.util;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
 
@@ -35,9 +36,13 @@ public class RuntimeUtils {
      * 打开指定输出文件目录
      *
      * @param outDir 输出文件目录
-     * @throws IOException
      */
     public static void openDir(String outDir) throws IOException {
+        File file = new File(outDir);
+        if (!file.isDirectory()) {
+            LOGGER.error("illegal directory:{}", outDir);
+            throw new IllegalArgumentException("Illegal directory " + outDir);
+        }
         String osName = System.getProperty("os.name");
         if (osName != null) {
             if (osName.contains("Mac")) {
@@ -45,10 +50,10 @@ public class RuntimeUtils {
             } else if (osName.contains("Windows")) {
                 Runtime.getRuntime().exec(MessageFormat.format("cmd /c start \"\" \"{0}\"", outDir));
             } else {
-                LOGGER.debug("文件输出目录:{}", outDir);
+                LOGGER.debug("file output directory:{}", outDir);
             }
         } else {
-            LOGGER.warn("读取操作系统失败");
+            LOGGER.warn("read operating system failed!");
         }
     }
 }

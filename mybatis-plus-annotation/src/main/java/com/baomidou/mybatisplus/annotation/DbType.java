@@ -118,7 +118,17 @@ public enum DbType {
      */
     @Deprecated
     GBASE_INFORMIX("gbase 8s", "南大通用数据库 GBase 8s"),
-
+    /**
+     * GBase8sPG
+     */
+    GBASE8S_PG("gbase8s-pg", "南大通用数据库 GBase 8s兼容pg"),
+    /**
+     * GBase8c
+     */
+    GBASE_8C("gbase8c", "南大通用数据库 GBase 8c"),
+    /**
+     * Sinodb
+     */
     SINODB("sinodb","星瑞格数据库"),
     /**
      * Oscar
@@ -144,16 +154,12 @@ public enum DbType {
      * CUBRID
      */
     CUBRID("cubrid", "CUBRID数据库"),
-    /**
-     * GOLDILOCKS
+   /**
+     * SUNDB
      */
-    GOLDILOCKS("goldilocks", "GOLDILOCKS数据库"),
+    SUNDB("sundb", "SUNDB数据库"),
     /**
-     * CSIIDB
-     */
-    CSIIDB("csiidb", "CSIIDB数据库"),
-    /**
-     * CSIIDB
+     * Hana
      */
     SAP_HANA("hana", "SAP_HANA数据库"),
     /**
@@ -192,6 +198,14 @@ public enum DbType {
      * lealone
      */
     LEALONE("lealone", "Lealone数据库"),
+    /**
+     * trino
+     */
+    TRINO("trino", "Trino数据库"),
+    /**
+     * presto
+     */
+    PRESTO("presto", "Presto数据库"),
     /**
      * UNKNOWN DB
      */

@@ -101,6 +101,10 @@ public class JdbcUtils {
             return DbType.GBASE;
         } else if (url.contains(":gbasedbt-sqli:") || url.contains(":informix-sqli:")) {
             return DbType.GBASE_8S;
+        } else if (url.contains(":gbase8s-pg:")){
+            return DbType.GBASE8S_PG;
+        } else if (url.contains(":gbase8c:")) {
+            return DbType.GBASE_8C;
         } else if (url.contains(":ch:") || url.contains(":clickhouse:")) {
             return DbType.CLICK_HOUSE;
         } else if (url.contains(":oscar:")) {
@@ -113,10 +117,8 @@ public class JdbcUtils {
             return DbType.HIGH_GO;
         } else if (url.contains(":cubrid:")) {
             return DbType.CUBRID;
-        } else if (url.contains(":goldilocks:")) {
-            return DbType.GOLDILOCKS;
-        } else if (url.contains(":csiidb:")) {
-            return DbType.CSIIDB;
+        } else if (url.contains(":sundb:")) {
+            return DbType.SUNDB;
         } else if (url.contains(":sap:")) {
             return DbType.SAP_HANA;
         } else if (url.contains(":impala:")) {
@@ -139,6 +141,10 @@ public class JdbcUtils {
             return DbType.SINODB;
         } else if (url.contains(":uxdb:")) {
             return DbType.UXDB;
+        } else if (url.contains(":trino:")) {
+            return DbType.TRINO;
+        } else if (url.contains(":presto:")) {
+            return DbType.PRESTO;
         } else {
             logger.warn("The jdbcUrl is " + jdbcUrl + ", Mybatis Plus Cannot Read Database type or The Database's Not Supported!");
             return DbType.OTHER;

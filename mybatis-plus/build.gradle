@@ -1,11 +1,19 @@
 dependencies {
+    api project(":mybatis-plus-core")
+    api project(":mybatis-plus-annotation")
     api project(":mybatis-plus-extension")
+
+    api "${lib.mybatis}"
+    api "${lib.'jsqlparser'}"
+
+    implementation "${lib."mybatis-spring"}"
 
     testImplementation "${lib.'spring-web'}"
     testImplementation "${lib.'javax.servlet-api'}"
 
     testImplementation "${lib.'spring-test'}"
-
+    testImplementation "${lib.'spring-aop'}"
+    testImplementation "${lib.'aspectjweaver'}"
     testImplementation "${lib."jackson"}"
     testImplementation "${lib."fastjson"}"
     testImplementation "${lib."gson"}"

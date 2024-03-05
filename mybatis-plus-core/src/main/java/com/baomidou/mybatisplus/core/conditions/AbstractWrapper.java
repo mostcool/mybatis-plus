@@ -47,7 +47,7 @@ import static java.util.stream.Collectors.joining;
  * @author hubin miemie HCL
  * @since 2017-05-26
  */
-@SuppressWarnings({"unchecked", "serial"})
+@SuppressWarnings({"unchecked"})
 public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, R, Children>> extends Wrapper<T>
     implements Compare<Children, R>, Nested<Children, Children>, Join<Children>, Func<Children, R> {
 
@@ -347,26 +347,50 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     @Override
     public Children groupBy(boolean condition, R column, R... columns) {
+        return doGroupBy(condition, column, CollectionUtils.toList(columns));
+    }
+
+    @Override
+    public Children groupBy(boolean condition, R column, List<R> columns) {
+        return doGroupBy(condition, column, columns);
+    }
+
+    public Children doGroupBy(boolean condition, R column, List<R> columns) {
         return maybeDo(condition, () -> {
-            String one = columnToString(column);
-            if (ArrayUtils.isNotEmpty(columns)) {
-                one += (StringPool.COMMA + columnsToString(columns));
+            String one = StringPool.EMPTY;
+            if (column != null) {
+                one = columnToString(column);
+            }
+            if (CollectionUtils.isNotEmpty(columns)) {
+                one += column != null ? StringPool.COMMA + columnsToString(columns) : columnsToString(columns);
             }
             final String finalOne = one;
             appendSqlSegments(GROUP_BY, () -> finalOne);
         });
     }
 
-    @Override
-    public Children orderBy(boolean condition, boolean isAsc, R column, R... columns) {
+
+    public Children doOrderBy(boolean condition, boolean isAsc, R column, List<R> columns) {
         return maybeDo(condition, () -> {
             final SqlKeyword mode = isAsc ? ASC : DESC;
-            appendSqlSegments(ORDER_BY, columnToSqlSegment(column), mode);
-            if (ArrayUtils.isNotEmpty(columns)) {
-                Arrays.stream(columns).forEach(c -> appendSqlSegments(ORDER_BY,
-                    columnToSqlSegment(c), mode));
+            if (column != null) {
+                appendSqlSegments(ORDER_BY, columnToSqlSegment(column), mode);
+            }
+            if (CollectionUtils.isNotEmpty(columns)) {
+                columns.forEach(c -> appendSqlSegments(ORDER_BY,
+                        columnToSqlSegment(c), mode));
             }
         });
+    }
+
+    @Override
+    public Children orderBy(boolean condition, boolean isAsc, R column, R... columns) {
+        return doOrderBy(condition, isAsc, column, CollectionUtils.toList(columns));
+    }
+
+    @Override
+    public Children orderBy(boolean condition, boolean isAsc, R column, List<R> columns) {
+        return doOrderBy(condition, isAsc, column, columns);
     }
 
     @Override
@@ -598,7 +622,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     @Override
     public String getSqlComment() {
         if (StringUtils.isNotBlank(sqlComment.getStringValue())) {
-            return "/*" + StringEscape.escapeRawString(sqlComment.getStringValue()) + "*/";
+            return "/*" + sqlComment.getStringValue() + "*/";
         }
         return null;
     }
@@ -606,7 +630,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     @Override
     public String getSqlFirst() {
         if (StringUtils.isNotBlank(sqlFirst.getStringValue())) {
-            return StringEscape.escapeRawString(sqlFirst.getStringValue());
+            return sqlFirst.getStringValue();
         }
         return null;
     }

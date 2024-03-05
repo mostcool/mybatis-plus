@@ -23,7 +23,9 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableLogic;
 import com.baomidou.mybatisplus.annotation.Version;
 import com.baomidou.mybatisplus.core.config.GlobalConfig;
+import com.baomidou.mybatisplus.core.handlers.IJsonTypeHandler;
 import com.baomidou.mybatisplus.core.toolkit.Constants;
+import com.baomidou.mybatisplus.core.toolkit.MybatisUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.sql.SqlScriptUtils;
 import lombok.AccessLevel;
@@ -52,7 +54,6 @@ import java.util.Map;
 @Getter
 @ToString
 @EqualsAndHashCode
-@SuppressWarnings("serial")
 public class TableFieldInfo implements Constants {
 
     /**
@@ -192,13 +193,12 @@ public class TableFieldInfo implements Constants {
     /**
      * 全新的 存在 TableField 注解时使用的构造函数
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
     public TableFieldInfo(GlobalConfig globalConfig, TableInfo tableInfo, Field field, TableField tableField,
                           Reflector reflector, boolean existTableLogic, boolean isOrderBy) {
         this(globalConfig, tableInfo, field, tableField, reflector, existTableLogic);
         this.isOrderBy = isOrderBy;
         if (isOrderBy) {
-            initOrderBy(globalConfig.getAnnotationHandler().getAnnotation(field, OrderBy.class));
+            initOrderBy(tableInfo, globalConfig.getAnnotationHandler().getAnnotation(field, OrderBy.class));
         }
     }
 
@@ -327,7 +327,7 @@ public class TableFieldInfo implements Constants {
         this(globalConfig, tableInfo, field, reflector, existTableLogic);
         this.isOrderBy = isOrderBy;
         if (isOrderBy) {
-            initOrderBy(globalConfig.getAnnotationHandler().getAnnotation(field, OrderBy.class));
+            initOrderBy(tableInfo, globalConfig.getAnnotationHandler().getAnnotation(field, OrderBy.class));
         }
     }
 
@@ -383,17 +383,15 @@ public class TableFieldInfo implements Constants {
     /**
      * 排序初始化
      *
+     * @param tableInfo 表信息
      * @param orderBy 排序注解
      */
-    private void initOrderBy(OrderBy orderBy) {
+    private void initOrderBy(TableInfo tableInfo, OrderBy orderBy) {
         if (null != orderBy) {
             this.isOrderBy = true;
             this.orderBySort = orderBy.sort();
-            String _orderBy = Constants.DESC;
-            if (orderBy.asc()) {
-                _orderBy = Constants.ASC;
-            }
-            this.orderByType = _orderBy;
+            this.orderByType = orderBy.asc() ? Constants.ASC : Constants.DESC;
+            tableInfo.getOrderByFields().add(new OrderFieldInfo(this.getColumn(), orderBy.asc(), orderBy.sort()));
         } else {
             this.isOrderBy = false;
         }
@@ -556,17 +554,21 @@ public class TableFieldInfo implements Constants {
      * @return ResultMapping
      */
     ResultMapping getResultMapping(final Configuration configuration) {
-        ResultMapping.Builder builder = new ResultMapping.Builder(configuration, property,
-            StringUtils.getTargetColumn(column), propertyType);
+        ResultMapping.Builder builder = new ResultMapping.Builder(configuration, this.property,
+            StringUtils.getTargetColumn(this.column), this.propertyType);
         TypeHandlerRegistry registry = configuration.getTypeHandlerRegistry();
-        if (jdbcType != null && jdbcType != JdbcType.UNDEFINED) {
-            builder.jdbcType(jdbcType);
+        if (this.jdbcType != null && this.jdbcType != JdbcType.UNDEFINED) {
+            builder.jdbcType(this.jdbcType);
         }
-        if (typeHandler != null && typeHandler != UnknownTypeHandler.class) {
+        if (this.typeHandler != null && this.typeHandler != UnknownTypeHandler.class) {
             TypeHandler<?> typeHandler = registry.getMappingTypeHandler(this.typeHandler);
-            if (typeHandler == null) {
-                typeHandler = registry.getInstance(propertyType, this.typeHandler);
-                // todo 这会有影响 registry.register(typeHandler);
+            if (IJsonTypeHandler.class.isAssignableFrom(this.typeHandler)) {
+                // 保证每次实例化
+                typeHandler = MybatisUtils.newJsonTypeHandler(this.typeHandler, this.propertyType, this.field);
+            } else {
+                if (typeHandler == null) {
+                    typeHandler = registry.getInstance(this.propertyType, this.typeHandler);
+                }
             }
             builder.typeHandler(typeHandler);
         }

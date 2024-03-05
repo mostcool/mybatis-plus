@@ -183,10 +183,11 @@ public class TableInfoHelper {
      * @return 数据库表反射信息
      */
     private static synchronized TableInfo initTableInfo(Configuration configuration, String currentNamespace, Class<?> clazz) {
-        /* 没有获取到缓存信息,则初始化 */
-        TableInfo tableInfo = new TableInfo(configuration, clazz);
-        tableInfo.setCurrentNamespace(currentNamespace);
         GlobalConfig globalConfig = GlobalConfigUtils.getGlobalConfig(configuration);
+        PostInitTableInfoHandler postInitTableInfoHandler = globalConfig.getPostInitTableInfoHandler();
+        /* 没有获取到缓存信息,则初始化 */
+        TableInfo tableInfo = postInitTableInfoHandler.creteTableInfo(configuration, clazz);
+        tableInfo.setCurrentNamespace(currentNamespace);
 
         /* 初始化表名相关 */
         final String[] excludeProperty = initTableName(clazz, globalConfig, tableInfo);
@@ -198,7 +199,7 @@ public class TableInfoHelper {
 
         /* 自动构建 resultMap */
         tableInfo.initResultMapIfNeed();
-        globalConfig.getPostInitTableInfoHandler().postTableInfo(tableInfo, configuration);
+        postInitTableInfoHandler.postTableInfo(tableInfo, configuration);
         TABLE_INFO_CACHE.put(clazz, tableInfo);
         TABLE_NAME_INFO_CACHE.put(tableInfo.getTableName(), tableInfo);
 
@@ -328,8 +329,8 @@ public class TableInfoHelper {
             }
 
             boolean isPK = false;
-            boolean isOrderBy = annotationHandler.getAnnotation(field, OrderBy.class) != null;
-
+            OrderBy orderBy = annotationHandler.getAnnotation(field, OrderBy.class);
+            boolean isOrderBy = orderBy != null;
             /* 主键ID 初始化 */
             if (existTableId) {
                 TableId tableId = annotationHandler.getAnnotation(field, TableId.class);
@@ -346,12 +347,11 @@ public class TableInfoHelper {
             }
 
             if (isPK) {
-                if (isOrderBy) {
-                    tableInfo.getOrderByFields().add(new TableFieldInfo(globalConfig, tableInfo, field, reflector, existTableLogic, true));
+                if (orderBy != null) {
+                    tableInfo.getOrderByFields().add(new OrderFieldInfo(tableInfo.getKeyColumn(), orderBy.asc(), orderBy.sort()));
                 }
                 continue;
             }
-
             final TableField tableField = annotationHandler.getAnnotation(field, TableField.class);
 
             /* 有 @TableField 注解的字段初始化 */
@@ -624,7 +624,7 @@ public class TableInfoHelper {
             // 多个主键生成器
             KeySequence keySequence = tableInfo.getKeySequence();
             if (null != keySequence && DbType.OTHER != keySequence.dbType()) {
-                keyGenerator = keyGenerators.stream().filter(k -> k.dbType() == keySequence.dbType()).findFirst().get();
+                keyGenerator = keyGenerators.stream().filter(k -> k.dbType() == keySequence.dbType()).findFirst().orElse(null);
             }
         }
         // 无法找到注解指定生成器，默认使用第一个生成器

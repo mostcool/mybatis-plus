@@ -34,11 +34,12 @@ public class MySqlTypeConvert implements ITypeConvert {
     public static final MySqlTypeConvert INSTANCE = new MySqlTypeConvert();
 
     /**
-     * @inheritDoc
+     * {@inheritDoc}
      */
     @Override
     public IColumnType processTypeConvert(GlobalConfig config, String fieldType) {
         return TypeConverts.use(fieldType)
+            .test(contains("point").then(BYTE_ARRAY))
             .test(containsAny("char", "text", "json", "enum").then(STRING))
             .test(contains("bigint").then(LONG))
             .test(containsAny("tinyint(1)", "bit(1)").then(BOOLEAN))
