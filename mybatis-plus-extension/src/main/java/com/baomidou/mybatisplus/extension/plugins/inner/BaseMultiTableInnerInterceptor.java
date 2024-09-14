@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2024, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,9 +24,11 @@ import lombok.ToString;
 import net.sf.jsqlparser.expression.*;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
+import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.expression.operators.relational.ExistsExpression;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.InExpression;
+import net.sf.jsqlparser.expression.operators.relational.ParenthesedExpressionList;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.select.*;
 
@@ -46,18 +48,18 @@ import java.util.stream.Collectors;
 @SuppressWarnings({"rawtypes"})
 public abstract class BaseMultiTableInnerInterceptor extends JsqlParserSupport implements InnerInterceptor {
 
-    protected void processSelectBody(SelectBody selectBody, final String whereSegment) {
+    protected void processSelectBody(Select selectBody, final String whereSegment) {
         if (selectBody == null) {
             return;
         }
         if (selectBody instanceof PlainSelect) {
             processPlainSelect((PlainSelect) selectBody, whereSegment);
-        } else if (selectBody instanceof WithItem) {
-            WithItem withItem = (WithItem) selectBody;
-            processSelectBody(withItem.getSubSelect().getSelectBody(), whereSegment);
-        } else {
+        } else if (selectBody instanceof ParenthesedSelect) {
+            ParenthesedSelect parenthesedSelect = (ParenthesedSelect) selectBody;
+            processSelectBody(parenthesedSelect.getSelect(), whereSegment);
+        } else if (selectBody instanceof SetOperationList) {
             SetOperationList operationList = (SetOperationList) selectBody;
-            List<SelectBody> selectBodyList = operationList.getSelects();
+            List<Select> selectBodyList = operationList.getSelects();
             if (CollectionUtils.isNotEmpty(selectBodyList)) {
                 selectBodyList.forEach(body -> processSelectBody(body, whereSegment));
             }
@@ -75,7 +77,7 @@ public abstract class BaseMultiTableInnerInterceptor extends JsqlParserSupport i
         }
         if (where != null) {
             if (where instanceof OrExpression) {
-                return new AndExpression(new Parenthesis(where), expression);
+                return new AndExpression(new ParenthesedExpressionList<>(where), expression);
             } else {
                 return new AndExpression(where, expression);
             }
@@ -88,7 +90,7 @@ public abstract class BaseMultiTableInnerInterceptor extends JsqlParserSupport i
      */
     protected void processPlainSelect(final PlainSelect plainSelect, final String whereSegment) {
         //#3087 github
-        List<SelectItem> selectItems = plainSelect.getSelectItems();
+        List<SelectItem<?>> selectItems = plainSelect.getSelectItems();
         if (CollectionUtils.isNotEmpty(selectItems)) {
             selectItems.forEach(selectItem -> processSelectItem(selectItem, whereSegment));
         }
@@ -105,7 +107,7 @@ public abstract class BaseMultiTableInnerInterceptor extends JsqlParserSupport i
         // 处理 join
         List<Join> joins = plainSelect.getJoins();
         if (CollectionUtils.isNotEmpty(joins)) {
-            mainTables = processJoins(mainTables, joins, whereSegment);
+            processJoins(mainTables, joins, whereSegment);
         }
 
         // 当有 mainTable 时，进行 where 条件追加
@@ -116,18 +118,18 @@ public abstract class BaseMultiTableInnerInterceptor extends JsqlParserSupport i
 
     private List<Table> processFromItem(FromItem fromItem, final String whereSegment) {
         // 处理括号括起来的表达式
-        while (fromItem instanceof ParenthesisFromItem) {
-            fromItem = ((ParenthesisFromItem) fromItem).getFromItem();
-        }
+//        while (fromItem instanceof ParenthesedFromItem) {
+//            fromItem = ((ParenthesedFromItem) fromItem).getFromItem();
+//        }
 
         List<Table> mainTables = new ArrayList<>();
         // 无 join 时的处理逻辑
         if (fromItem instanceof Table) {
             Table fromTable = (Table) fromItem;
             mainTables.add(fromTable);
-        } else if (fromItem instanceof SubJoin) {
+        } else if (fromItem instanceof ParenthesedFromItem) {
             // SubJoin 类型则还需要添加上 where 条件
-            List<Table> tables = processSubJoin((SubJoin) fromItem, whereSegment);
+            List<Table> tables = processSubJoin((ParenthesedFromItem) fromItem, whereSegment);
             mainTables.addAll(tables);
         } else {
             // 处理下 fromItem
@@ -177,8 +179,8 @@ public abstract class BaseMultiTableInnerInterceptor extends JsqlParserSupport i
                 // in
                 InExpression expression = (InExpression) where;
                 Expression inExpression = expression.getRightExpression();
-                if (inExpression instanceof SubSelect) {
-                    processSelectBody(((SubSelect) inExpression).getSelectBody(), whereSegment);
+                if (inExpression instanceof Select) {
+                    processSelectBody(((Select) inExpression), whereSegment);
                 }
             } else if (where instanceof ExistsExpression) {
                 // exists
@@ -188,22 +190,22 @@ public abstract class BaseMultiTableInnerInterceptor extends JsqlParserSupport i
                 // not exists
                 NotExpression expression = (NotExpression) where;
                 processWhereSubSelect(expression.getExpression(), whereSegment);
-            } else if (where instanceof Parenthesis) {
-                Parenthesis expression = (Parenthesis) where;
-                processWhereSubSelect(expression.getExpression(), whereSegment);
+            } else if (where instanceof ParenthesedExpressionList) {
+                ParenthesedExpressionList<Expression> expression = (ParenthesedExpressionList) where;
+                processWhereSubSelect(expression.get(0), whereSegment);
             }
         }
     }
 
     protected void processSelectItem(SelectItem selectItem, final String whereSegment) {
-        if (selectItem instanceof SelectExpressionItem) {
-            SelectExpressionItem selectExpressionItem = (SelectExpressionItem) selectItem;
-            final Expression expression = selectExpressionItem.getExpression();
-            if (expression instanceof SubSelect) {
-                processSelectBody(((SubSelect) expression).getSelectBody(), whereSegment);
-            } else if (expression instanceof Function) {
-                processFunction((Function) expression, whereSegment);
-            }
+        Expression expression = selectItem.getExpression();
+        if (expression instanceof Select) {
+            processSelectBody(((Select) expression), whereSegment);
+        } else if (expression instanceof Function) {
+            processFunction((Function) expression, whereSegment);
+        } else if (expression instanceof ExistsExpression) {
+            ExistsExpression existsExpression = (ExistsExpression) expression;
+            processSelectBody((Select) existsExpression.getRightExpression(), whereSegment);
         }
     }
 
@@ -215,13 +217,20 @@ public abstract class BaseMultiTableInnerInterceptor extends JsqlParserSupport i
      * @param function
      */
     protected void processFunction(Function function, final String whereSegment) {
-        ExpressionList parameters = function.getParameters();
+        ExpressionList<?> parameters = function.getParameters();
         if (parameters != null) {
-            parameters.getExpressions().forEach(expression -> {
-                if (expression instanceof SubSelect) {
-                    processSelectBody(((SubSelect) expression).getSelectBody(), whereSegment);
+            parameters.forEach(expression -> {
+                if (expression instanceof Select) {
+                    processSelectBody(((Select) expression), whereSegment);
                 } else if (expression instanceof Function) {
                     processFunction((Function) expression, whereSegment);
+                } else if (expression instanceof EqualsTo) {
+                    if (((EqualsTo) expression).getLeftExpression() instanceof Select) {
+                        processSelectBody(((Select) ((EqualsTo) expression).getLeftExpression()), whereSegment);
+                    }
+                    if (((EqualsTo) expression).getRightExpression() instanceof Select) {
+                        processSelectBody(((Select) ((EqualsTo) expression).getRightExpression()), whereSegment);
+                    }
                 }
             });
         }
@@ -232,25 +241,15 @@ public abstract class BaseMultiTableInnerInterceptor extends JsqlParserSupport i
      */
     protected void processOtherFromItem(FromItem fromItem, final String whereSegment) {
         // 去除括号
-        while (fromItem instanceof ParenthesisFromItem) {
-            fromItem = ((ParenthesisFromItem) fromItem).getFromItem();
-        }
+//        while (fromItem instanceof ParenthesisFromItem) {
+//            fromItem = ((ParenthesisFromItem) fromItem).getFromItem();
+//        }
 
-        if (fromItem instanceof SubSelect) {
-            SubSelect subSelect = (SubSelect) fromItem;
-            if (subSelect.getSelectBody() != null) {
-                processSelectBody(subSelect.getSelectBody(), whereSegment);
-            }
-        } else if (fromItem instanceof ValuesList) {
+        if (fromItem instanceof ParenthesedSelect) {
+            Select subSelect = (Select) fromItem;
+            processSelectBody(subSelect, whereSegment);
+        } else if (fromItem instanceof ParenthesedFromItem) {
             logger.debug("Perform a subQuery, if you do not give us feedback");
-        } else if (fromItem instanceof LateralSubSelect) {
-            LateralSubSelect lateralSubSelect = (LateralSubSelect) fromItem;
-            if (lateralSubSelect.getSubSelect() != null) {
-                SubSelect subSelect = lateralSubSelect.getSubSelect();
-                if (subSelect.getSelectBody() != null) {
-                    processSelectBody(subSelect.getSelectBody(), whereSegment);
-                }
-            }
         }
     }
 
@@ -260,12 +259,15 @@ public abstract class BaseMultiTableInnerInterceptor extends JsqlParserSupport i
      * @param subJoin subJoin
      * @return Table subJoin 中的主表
      */
-    private List<Table> processSubJoin(SubJoin subJoin, final String whereSegment) {
+    private List<Table> processSubJoin(ParenthesedFromItem subJoin, final String whereSegment) {
         List<Table> mainTables = new ArrayList<>();
-        if (subJoin.getJoinList() != null) {
-            List<Table> list = processFromItem(subJoin.getLeft(), whereSegment);
+        while (subJoin.getJoins() == null && subJoin.getFromItem() instanceof ParenthesedFromItem) {
+            subJoin = (ParenthesedFromItem) subJoin.getFromItem();
+        }
+        if (subJoin.getJoins() != null) {
+            List<Table> list = processFromItem(subJoin.getFromItem(), whereSegment);
             mainTables.addAll(list);
-            mainTables = processJoins(mainTables, subJoin.getJoinList(), whereSegment);
+            processJoins(mainTables, subJoin.getJoins(), whereSegment);
         }
         return mainTables;
     }
@@ -299,8 +301,8 @@ public abstract class BaseMultiTableInnerInterceptor extends JsqlParserSupport i
             if (joinItem instanceof Table) {
                 joinTables = new ArrayList<>();
                 joinTables.add((Table) joinItem);
-            } else if (joinItem instanceof SubJoin) {
-                joinTables = processSubJoin((SubJoin) joinItem, whereSegment);
+            } else if (joinItem instanceof ParenthesedFromItem) {
+                joinTables = processSubJoin((ParenthesedFromItem) joinItem, whereSegment);
             }
 
             if (joinTables != null) {
@@ -383,9 +385,9 @@ public abstract class BaseMultiTableInnerInterceptor extends JsqlParserSupport i
         }
         // 构造每张表的条件
         List<Expression> expressions = tables.stream()
-            .map(item -> buildTableExpression(item, currentExpression, whereSegment))
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
+                .map(item -> buildTableExpression(item, currentExpression, whereSegment))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
 
         // 没有表需要处理直接返回
         if (CollectionUtils.isEmpty(expressions)) {
@@ -405,7 +407,7 @@ public abstract class BaseMultiTableInnerInterceptor extends JsqlParserSupport i
             return injectExpression;
         }
         if (currentExpression instanceof OrExpression) {
-            return new AndExpression(new Parenthesis(currentExpression), injectExpression);
+            return new AndExpression(new ParenthesedExpressionList<>(currentExpression), injectExpression);
         } else {
             return new AndExpression(currentExpression, injectExpression);
         }

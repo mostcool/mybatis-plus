@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2024, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -267,7 +267,6 @@ public class TableField {
     }
 
     public TableField setComment(String comment) {
-        //TODO 暂时挪动到这
         this.comment = this.globalConfig.isSwagger()
             && StringUtils.isNotBlank(comment) ? comment.replace("\"", "\\\"") : comment;
         return this;
@@ -406,6 +405,13 @@ public class TableField {
          */
         private String typeName;
 
+        /**
+         * 是否为生成列
+         *
+         * @since 3.5.8
+         */
+        private boolean generatedColumn;
+
         public MetaInfo(DatabaseMetaDataWrapper.Column column, TableInfo tableInfo) {
             if (column != null) {
                 this.tableName = tableInfo.getName();
@@ -417,6 +423,7 @@ public class TableField {
                 this.scale = column.getScale();
                 this.jdbcType = column.getJdbcType();
                 this.typeName = column.getTypeName();
+                this.generatedColumn = column.isGeneratedColumn();
             }
         }
 
@@ -468,6 +475,7 @@ public class TableField {
                 ", scale=" + scale +
                 ", jdbcType=" + jdbcType +
                 ", typeName='" + typeName + '\'' +
+                ", generatedColumn=" + generatedColumn +
                 '}';
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2024, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.baomidou.mybatisplus.generator.config.GlobalConfig;
 import com.baomidou.mybatisplus.generator.config.StrategyConfig;
 import com.baomidou.mybatisplus.generator.config.builder.ConfigBuilder;
 import com.baomidou.mybatisplus.generator.config.builder.Entity;
+import com.baomidou.mybatisplus.generator.config.builder.Service;
 import com.baomidou.mybatisplus.generator.config.rules.IColumnType;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
@@ -170,7 +171,6 @@ public class TableInfo {
      */
     public TableInfo setEntityName(@NotNull String entityName) {
         this.entityName = entityName;
-        //TODO 先放置在这里
         setConvert();
         return this;
     }
@@ -210,7 +210,6 @@ public class TableInfo {
      * 转换filed实体为 xml mapper 中的 base column 字符串信息
      */
     public String getFieldNames() {
-        //TODO 感觉这个也啥必要,不打算公开set方法了
         if (StringUtils.isBlank(fieldNames)) {
             this.fieldNames = this.fields.stream().map(TableField::getColumnName).collect(Collectors.joining(", "));
         }
@@ -328,7 +327,9 @@ public class TableInfo {
 
     /**
      * 获取是否生成service接口
+     * @deprecated {@link Service.Builder#disableService()}
      */
+    @Deprecated
     public boolean isServiceInterface() {
         return globalConfig.isServiceInterface();
     }

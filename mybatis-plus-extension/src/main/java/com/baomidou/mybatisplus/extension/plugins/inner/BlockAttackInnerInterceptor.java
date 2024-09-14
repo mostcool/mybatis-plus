@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2024, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,12 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.parser.JsqlParserSupport;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.expression.Parenthesis;
 import net.sf.jsqlparser.expression.operators.conditional.AndExpression;
 import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
 import net.sf.jsqlparser.expression.operators.relational.EqualsTo;
 import net.sf.jsqlparser.expression.operators.relational.IsNullExpression;
 import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
+import net.sf.jsqlparser.expression.operators.relational.ParenthesedExpressionList;
 import net.sf.jsqlparser.statement.delete.Delete;
 import net.sf.jsqlparser.statement.update.Update;
 import org.apache.ibatis.executor.statement.StatementHandler;
@@ -54,7 +54,9 @@ public class BlockAttackInnerInterceptor extends JsqlParserSupport implements In
         MappedStatement ms = handler.mappedStatement();
         SqlCommandType sct = ms.getSqlCommandType();
         if (sct == SqlCommandType.UPDATE || sct == SqlCommandType.DELETE) {
-            if (InterceptorIgnoreHelper.willIgnoreBlockAttack(ms.getId())) return;
+            if (InterceptorIgnoreHelper.willIgnoreBlockAttack(ms.getId())) {
+                return;
+            }
             BoundSql boundSql = handler.boundSql();
             parserMulti(boundSql.getSql(), null);
         }
@@ -111,10 +113,10 @@ public class BlockAttackInnerInterceptor extends JsqlParserSupport implements In
 
             AndExpression andExpression = (AndExpression) where;
             return fullMatch(andExpression.getLeftExpression(), logicField) && fullMatch(andExpression.getRightExpression(), logicField);
-        } else if (where instanceof Parenthesis) {
+        } else if (where instanceof ParenthesedExpressionList) {
             // example: (1 = 1)
-            Parenthesis parenthesis = (Parenthesis) where;
-            return fullMatch(parenthesis.getExpression(), logicField);
+            ParenthesedExpressionList<Expression> parenthesis = (ParenthesedExpressionList<Expression>) where;
+            return fullMatch(parenthesis.get(0), logicField);
         }
 
         return false;

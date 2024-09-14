@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2024, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.mapping.ResultMap;
 import org.apache.ibatis.mapping.SqlCommandType;
+import org.apache.ibatis.parsing.PropertyParser;
 import org.apache.ibatis.reflection.Reflector;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.type.SimpleTypeRegistry;
@@ -223,7 +224,7 @@ public class TableInfoHelper {
         GlobalConfig.DbConfig dbConfig = globalConfig.getDbConfig();
         AnnotationHandler annotationHandler = globalConfig.getAnnotationHandler();
         TableName table = annotationHandler.getAnnotation(clazz, TableName.class);
-
+        Configuration configuration = tableInfo.getConfiguration();
         String tableName = clazz.getSimpleName();
         String tablePrefix = dbConfig.getTablePrefix();
         String schema = dbConfig.getSchema();
@@ -232,7 +233,7 @@ public class TableInfoHelper {
 
         if (table != null) {
             if (StringUtils.isNotBlank(table.value())) {
-                tableName = table.value();
+                tableName = PropertyParser.parse(table.value(), configuration.getVariables());
                 if (StringUtils.isNotBlank(tablePrefix) && !table.keepGlobalPrefix()) {
                     tablePrefixEffect = false;
                 }
@@ -240,7 +241,7 @@ public class TableInfoHelper {
                 tableName = initTableNameWithDbConfig(tableName, dbConfig);
             }
             if (StringUtils.isNotBlank(table.schema())) {
-                schema = table.schema();
+                schema = PropertyParser.parse(table.schema(), configuration.getVariables());
             }
             /* 表结果集映射 */
             if (StringUtils.isNotBlank(table.resultMap())) {

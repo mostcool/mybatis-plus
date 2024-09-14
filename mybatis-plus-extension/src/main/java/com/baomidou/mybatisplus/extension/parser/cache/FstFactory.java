@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2024, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,7 @@ public class FstFactory {
         conf.registerClass(net.sf.jsqlparser.expression.ExtractExpression.class);
         conf.registerClass(net.sf.jsqlparser.expression.FilterOverImpl.class);
         conf.registerClass(net.sf.jsqlparser.expression.Function.class);
+        conf.registerClass(net.sf.jsqlparser.expression.Function.HavingClause.class);
         conf.registerClass(net.sf.jsqlparser.expression.HexValue.class);
         conf.registerClass(net.sf.jsqlparser.expression.IntervalExpression.class);
         conf.registerClass(net.sf.jsqlparser.expression.JdbcNamedParameter.class);
@@ -59,6 +60,7 @@ public class FstFactory {
         conf.registerClass(net.sf.jsqlparser.expression.JsonFunctionExpression.class);
         conf.registerClass(net.sf.jsqlparser.expression.JsonKeyValuePair.class);
         conf.registerClass(net.sf.jsqlparser.expression.KeepExpression.class);
+        conf.registerClass(net.sf.jsqlparser.expression.LambdaExpression.class);
         conf.registerClass(net.sf.jsqlparser.expression.LongValue.class);
         conf.registerClass(net.sf.jsqlparser.expression.MySQLGroupConcat.class);
         conf.registerClass(net.sf.jsqlparser.expression.MySQLIndexHint.class);
@@ -73,19 +75,20 @@ public class FstFactory {
         conf.registerClass(net.sf.jsqlparser.expression.OverlapsCondition.class);
         conf.registerClass(net.sf.jsqlparser.expression.Parenthesis.class);
         conf.registerClass(net.sf.jsqlparser.expression.PartitionByClause.class);
+        conf.registerClass(net.sf.jsqlparser.expression.RangeExpression.class);
         conf.registerClass(net.sf.jsqlparser.expression.RowConstructor.class);
         conf.registerClass(net.sf.jsqlparser.expression.RowGetExpression.class);
         conf.registerClass(net.sf.jsqlparser.expression.SQLServerHints.class);
-        conf.registerClass(net.sf.jsqlparser.expression.SafeCastExpression.class);
         conf.registerClass(net.sf.jsqlparser.expression.SignedExpression.class);
         conf.registerClass(net.sf.jsqlparser.expression.StringValue.class);
+        conf.registerClass(net.sf.jsqlparser.expression.StructType.class);
         conf.registerClass(net.sf.jsqlparser.expression.TimeKeyExpression.class);
         conf.registerClass(net.sf.jsqlparser.expression.TimeValue.class);
         conf.registerClass(net.sf.jsqlparser.expression.TimestampValue.class);
         conf.registerClass(net.sf.jsqlparser.expression.TimezoneExpression.class);
-        conf.registerClass(net.sf.jsqlparser.expression.TryCastExpression.class);
+        conf.registerClass(net.sf.jsqlparser.expression.TranscodingFunction.class);
+        conf.registerClass(net.sf.jsqlparser.expression.TrimFunction.class);
         conf.registerClass(net.sf.jsqlparser.expression.UserVariable.class);
-        conf.registerClass(net.sf.jsqlparser.expression.ValueListExpression.class);
         conf.registerClass(net.sf.jsqlparser.expression.VariableAssignment.class);
         conf.registerClass(net.sf.jsqlparser.expression.WhenClause.class);
         conf.registerClass(net.sf.jsqlparser.expression.WindowDefinition.class);
@@ -109,7 +112,11 @@ public class FstFactory {
         conf.registerClass(net.sf.jsqlparser.expression.operators.conditional.OrExpression.class);
         conf.registerClass(net.sf.jsqlparser.expression.operators.conditional.XorExpression.class);
         conf.registerClass(net.sf.jsqlparser.expression.operators.relational.Between.class);
+        conf.registerClass(net.sf.jsqlparser.expression.operators.relational.ContainedBy.class);
+        conf.registerClass(net.sf.jsqlparser.expression.operators.relational.Contains.class);
+        conf.registerClass(net.sf.jsqlparser.expression.operators.relational.DoubleAnd.class);
         conf.registerClass(net.sf.jsqlparser.expression.operators.relational.EqualsTo.class);
+        conf.registerClass(net.sf.jsqlparser.expression.operators.relational.ExcludesExpression.class);
         conf.registerClass(net.sf.jsqlparser.expression.operators.relational.ExistsExpression.class);
         conf.registerClass(net.sf.jsqlparser.expression.operators.relational.ExpressionList.class);
         conf.registerClass(net.sf.jsqlparser.expression.operators.relational.FullTextSearch.class);
@@ -117,18 +124,23 @@ public class FstFactory {
         conf.registerClass(net.sf.jsqlparser.expression.operators.relational.GreaterThan.class);
         conf.registerClass(net.sf.jsqlparser.expression.operators.relational.GreaterThanEquals.class);
         conf.registerClass(net.sf.jsqlparser.expression.operators.relational.InExpression.class);
+        conf.registerClass(net.sf.jsqlparser.expression.operators.relational.IncludesExpression.class);
         conf.registerClass(net.sf.jsqlparser.expression.operators.relational.IsBooleanExpression.class);
         conf.registerClass(net.sf.jsqlparser.expression.operators.relational.IsDistinctExpression.class);
         conf.registerClass(net.sf.jsqlparser.expression.operators.relational.IsNullExpression.class);
         conf.registerClass(net.sf.jsqlparser.expression.operators.relational.JsonOperator.class);
         conf.registerClass(net.sf.jsqlparser.expression.operators.relational.LikeExpression.class);
         conf.registerClass(net.sf.jsqlparser.expression.operators.relational.Matches.class);
+        conf.registerClass(net.sf.jsqlparser.expression.operators.relational.MemberOfExpression.class);
         conf.registerClass(net.sf.jsqlparser.expression.operators.relational.MinorThan.class);
         conf.registerClass(net.sf.jsqlparser.expression.operators.relational.MinorThanEquals.class);
+        conf.registerClass(net.sf.jsqlparser.expression.operators.relational.NamedExpressionList.class);
         conf.registerClass(net.sf.jsqlparser.expression.operators.relational.NotEqualsTo.class);
+        conf.registerClass(net.sf.jsqlparser.expression.operators.relational.ParenthesedExpressionList.class);
         conf.registerClass(net.sf.jsqlparser.expression.operators.relational.RegExpMatchOperator.class);
-        conf.registerClass(net.sf.jsqlparser.expression.operators.relational.RegExpMySQLOperator.class);
         conf.registerClass(net.sf.jsqlparser.expression.operators.relational.SimilarToExpression.class);
+        conf.registerClass(net.sf.jsqlparser.expression.operators.relational.TSQLLeftJoin.class);
+        conf.registerClass(net.sf.jsqlparser.expression.operators.relational.TSQLRightJoin.class);
         conf.registerClass(net.sf.jsqlparser.parser.ASTNodeAccessImpl.class);
         conf.registerClass(net.sf.jsqlparser.parser.Token.class);
         conf.registerClass(net.sf.jsqlparser.schema.Column.class);
@@ -192,43 +204,43 @@ public class FstFactory {
         conf.registerClass(net.sf.jsqlparser.statement.insert.InsertConflictAction.class);
         conf.registerClass(net.sf.jsqlparser.statement.insert.InsertConflictTarget.class);
         conf.registerClass(net.sf.jsqlparser.statement.merge.Merge.class);
+        conf.registerClass(net.sf.jsqlparser.statement.merge.MergeDelete.class);
         conf.registerClass(net.sf.jsqlparser.statement.merge.MergeInsert.class);
         conf.registerClass(net.sf.jsqlparser.statement.merge.MergeUpdate.class);
-        conf.registerClass(net.sf.jsqlparser.statement.replace.Replace.class);
+        conf.registerClass(net.sf.jsqlparser.statement.refresh.RefreshMaterializedViewStatement.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.AllColumns.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.AllTableColumns.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.Distinct.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.ExceptOp.class);
-        conf.registerClass(net.sf.jsqlparser.statement.select.ExpressionListItem.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.Fetch.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.First.class);
-        conf.registerClass(net.sf.jsqlparser.statement.select.FunctionItem.class);
+        conf.registerClass(net.sf.jsqlparser.statement.select.ForClause.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.GroupByElement.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.IntersectOp.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.Join.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.KSQLJoinWindow.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.KSQLWindow.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.LateralSubSelect.class);
+        conf.registerClass(net.sf.jsqlparser.statement.select.LateralView.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.Limit.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.MinusOp.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.Offset.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.OptimizeFor.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.OrderByElement.class);
-        conf.registerClass(net.sf.jsqlparser.statement.select.ParenthesisFromItem.class);
+        conf.registerClass(net.sf.jsqlparser.statement.select.ParenthesedFromItem.class);
+        conf.registerClass(net.sf.jsqlparser.statement.select.ParenthesedSelect.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.Pivot.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.PivotXml.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.PlainSelect.class);
-        conf.registerClass(net.sf.jsqlparser.statement.select.Select.class);
-        conf.registerClass(net.sf.jsqlparser.statement.select.SelectExpressionItem.class);
+        conf.registerClass(net.sf.jsqlparser.statement.select.SelectItem.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.SetOperationList.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.Skip.class);
-        conf.registerClass(net.sf.jsqlparser.statement.select.SubJoin.class);
-        conf.registerClass(net.sf.jsqlparser.statement.select.SubSelect.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.TableFunction.class);
+        conf.registerClass(net.sf.jsqlparser.statement.select.TableStatement.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.Top.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.UnPivot.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.UnionOp.class);
-        conf.registerClass(net.sf.jsqlparser.statement.select.ValuesList.class);
+        conf.registerClass(net.sf.jsqlparser.statement.select.Values.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.Wait.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.WithIsolation.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.WithItem.class);
@@ -238,15 +250,14 @@ public class FstFactory {
         conf.registerClass(net.sf.jsqlparser.statement.update.Update.class);
         conf.registerClass(net.sf.jsqlparser.statement.update.UpdateSet.class);
         conf.registerClass(net.sf.jsqlparser.statement.upsert.Upsert.class);
-        conf.registerClass(net.sf.jsqlparser.statement.values.ValuesStatement.class);
         conf.registerClass(net.sf.jsqlparser.util.cnfexpression.MultiAndExpression.class);
         conf.registerClass(net.sf.jsqlparser.util.cnfexpression.MultiOrExpression.class);
         conf.registerClass(net.sf.jsqlparser.expression.BinaryExpression.class);
         conf.registerClass(net.sf.jsqlparser.expression.operators.relational.ComparisonOperator.class);
         conf.registerClass(net.sf.jsqlparser.expression.operators.relational.OldOracleJoinBinaryExpression.class);
         conf.registerClass(net.sf.jsqlparser.statement.CreateFunctionalStatement.class);
+        conf.registerClass(net.sf.jsqlparser.statement.select.Select.class);
         conf.registerClass(net.sf.jsqlparser.statement.select.SetOperation.class);
-        conf.registerClass(net.sf.jsqlparser.statement.select.SpecialSubSelect.class);
         conf.registerClass(net.sf.jsqlparser.util.cnfexpression.MultipleExpression.class);
     }
 

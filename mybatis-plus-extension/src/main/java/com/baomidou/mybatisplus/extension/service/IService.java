@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2024, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Assert;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.Constants;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.conditions.query.ChainQuery;
 import com.baomidou.mybatisplus.extension.conditions.query.LambdaQueryChainWrapper;
@@ -49,7 +50,7 @@ public interface IService<T> {
     /**
      * 默认批次提交数量
      */
-    int DEFAULT_BATCH_SIZE = 1000;
+    int DEFAULT_BATCH_SIZE = Constants.DEFAULT_BATCH_SIZE;
 
     /**
      * 插入一条记录（选择字段，策略插入）
@@ -155,7 +156,7 @@ public interface IService<T> {
         if (CollectionUtils.isEmpty(list)) {
             return false;
         }
-        return SqlHelper.retBool(getBaseMapper().deleteBatchIds(list));
+        return SqlHelper.retBool(getBaseMapper().deleteByIds(list));
     }
 
     /**
@@ -166,15 +167,11 @@ public interface IService<T> {
      * @return 删除结果
      * @since 3.5.0
      */
-    @Transactional(rollbackFor = Exception.class)
     default boolean removeByIds(Collection<?> list, boolean useFill) {
         if (CollectionUtils.isEmpty(list)) {
             return false;
         }
-        if (useFill) {
-            return removeBatchByIds(list, true);
-        }
-        return SqlHelper.retBool(getBaseMapper().deleteBatchIds(list));
+        return SqlHelper.retBool(getBaseMapper().deleteByIds(list, useFill));
     }
 
     /**
@@ -197,7 +194,6 @@ public interface IService<T> {
      * @return 删除结果
      * @since 3.5.0
      */
-    @Transactional(rollbackFor = Exception.class)
     default boolean removeBatchByIds(Collection<?> list, boolean useFill) {
         return removeBatchByIds(list, DEFAULT_BATCH_SIZE, useFill);
     }
@@ -209,7 +205,9 @@ public interface IService<T> {
      * @param batchSize 批次大小
      * @return 删除结果
      * @since 3.5.0
+     * @deprecated 3.5.7 {@link #removeBatchByIds(Collection)}
      */
+    @Deprecated
     default boolean removeBatchByIds(Collection<?> list, int batchSize) {
         throw new UnsupportedOperationException("不支持的方法!");
     }
@@ -222,7 +220,9 @@ public interface IService<T> {
      * @param useFill   是否启用填充(为true的情况,会将入参转换实体进行delete删除)
      * @return 删除结果
      * @since 3.5.0
+     * @deprecated 3.5.7 {@link #removeBatchByIds(Collection)}
      */
+    @Deprecated
     default boolean removeBatchByIds(Collection<?> list, int batchSize, boolean useFill) {
         throw new UnsupportedOperationException("不支持的方法!");
     }
@@ -238,6 +238,7 @@ public interface IService<T> {
 
     /**
      * 根据 UpdateWrapper 条件，更新记录 需要设置sqlset
+     * <p>此方法无法进行自动填充,如需自动填充请使用{@link #update(Object, Wrapper)}</p>
      *
      * @param updateWrapper 实体对象封装操作类 {@link com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper}
      */
@@ -248,7 +249,7 @@ public interface IService<T> {
     /**
      * 根据 whereEntity 条件，更新记录
      *
-     * @param entity        实体对象
+     * @param entity        实体对象(当entity为空时无法进行自动填充)
      * @param updateWrapper 实体对象封装操作类 {@link com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper}
      */
     default boolean update(T entity, Wrapper<T> updateWrapper) {
@@ -305,7 +306,7 @@ public interface IService<T> {
      * @param idList 主键ID列表
      */
     default List<T> listByIds(Collection<? extends Serializable> idList) {
-        return getBaseMapper().selectBatchIds(idList);
+        return getBaseMapper().selectByIds(idList);
     }
 
     /**

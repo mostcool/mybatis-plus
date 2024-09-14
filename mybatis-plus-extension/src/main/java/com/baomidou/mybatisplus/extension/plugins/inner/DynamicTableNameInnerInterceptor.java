@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2024, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public class DynamicTableNameInnerInterceptor implements InnerInterceptor {
         }
     }
 
-    protected String changeTable(String sql) {
+    public String changeTable(String sql) {
         ExceptionUtils.throwMpe(null == tableNameHandler, "Please implement TableNameHandler processing logic");
         TableNameParser parser = new TableNameParser(sql);
         List<TableNameParser.SqlToken> names = new ArrayList<>();

@@ -1,19 +1,37 @@
-/*
- * Copyright (c) 2011-2019, hubin (jobob@qq.com).
- * <p>
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- * <p>
- * https://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
 package com.baomidou.mybatisplus.test.h2;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import com.baomidou.mybatisplus.test.h2.mapper.H2UserMapper;
+import org.apache.ibatis.exceptions.PersistenceException;
+import org.apache.ibatis.exceptions.TooManyResultsException;
+import org.apache.ibatis.plugin.Interceptor;
+import org.apache.ibatis.session.Configuration;
+import org.apache.ibatis.session.ResultHandler;
+import org.apache.ibatis.session.SqlSessionFactory;
+import org.apache.ibatis.session.defaults.DefaultSqlSessionFactory;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
+import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
@@ -35,36 +53,12 @@ import com.baomidou.mybatisplus.test.h2.entity.H2User;
 import com.baomidou.mybatisplus.test.h2.enums.AgeEnum;
 import com.baomidou.mybatisplus.test.h2.mapper.H2StudentMapper;
 import com.baomidou.mybatisplus.test.h2.service.IH2UserService;
+
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.select.Select;
-import org.apache.ibatis.exceptions.PersistenceException;
-import org.apache.ibatis.exceptions.TooManyResultsException;
-import org.apache.ibatis.plugin.Interceptor;
-import org.apache.ibatis.session.Configuration;
-import org.apache.ibatis.session.ResultHandler;
-import org.apache.ibatis.session.SqlSessionFactory;
-import org.apache.ibatis.session.defaults.DefaultSqlSessionFactory;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataAccessException;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.*;
 
 /**
  * Mybatis Plus H2 Junit Test
- * JDK 8 run test:
- * <p>"Error: Could not create the Java Virtual Machine."</p>
- * <p>Go to build.gradle: remove below configuration:</p>
- * <p>
- * //  jvmArgs += ["--add-opens", "java.base/java.lang=ALL-UNNAMED",
- * //                    "--add-opens", "java.base/java.lang.invoke=ALL-UNNAMED"]
- * </p>
  *
  * @author Caratacus
  * @since 2017/4/1
@@ -197,18 +191,28 @@ class H2UserTest extends BaseTest {
         user.setDesc("asdf");
         user.setTestType(1);
         user.setVersion(1);
+        final LocalDateTime dateTime = LocalDateTime.of(2024, 3, 29, 10, 0, 0);
+        user.setCreatedDt(dateTime);
         userService.save(user);
 
         H2User userDB = userService.getById(id);
         Assertions.assertEquals(1, userDB.getVersion().intValue());
+        Assertions.assertTrue(userDB.getCreatedDt().compareTo(dateTime) == 0);
 
         userDB.setName("992");
+        userDB.setCreatedDt(dateTime);
+        System.out.println("===============================================");
         userService.updateById(userDB);
         Assertions.assertEquals(2, userDB.getVersion().intValue(), "updated version value should be updated to entity");
 
         userDB = userService.getById(id);
         Assertions.assertEquals(2, userDB.getVersion().intValue());
         Assertions.assertEquals("992", userDB.getName());
+        userDB.setCreatedDt(LocalDateTime.now());
+        userService.updateById(userDB);
+        System.out.println("===============================================");
+        userService.lambdaUpdate().set(H2User::getAge, AgeEnum.THREE).eq(H2User::getTestId, id).update();
+
     }
 
     @Test
@@ -289,7 +293,6 @@ class H2UserTest extends BaseTest {
             userService.update(new H2User().setPrice(BigDecimal.ZERO), null);
             Assertions.fail("SHOULD NOT REACH HERE");
         } catch (Exception e) {
-            e.printStackTrace();
             Assertions.assertTrue(checkIsDataUpdateLimitationException(e));
         }
     }
@@ -340,10 +343,10 @@ class H2UserTest extends BaseTest {
     @Test
     @Order(21)
     void testSaveBatch() {
-        Assertions.assertTrue(userService.saveBatch(Arrays.asList(new H2User("saveBatch0"))));
-        Assertions.assertTrue(userService.saveBatch(Arrays.asList(new H2User("saveBatch1"), new H2User("saveBatch2"), new H2User("saveBatch3"), new H2User("saveBatch4"))));
+        Assertions.assertTrue(userService.saveBatch(List.of(new H2User("saveBatch0"))));
+        Assertions.assertTrue(userService.saveBatch(List.of(new H2User("saveBatch1"), new H2User("saveBatch2"), new H2User("saveBatch3"), new H2User("saveBatch4"))));
         Assertions.assertEquals(5, userService.count(new QueryWrapper<H2User>().like("name", "saveBatch")));
-        Assertions.assertTrue(userService.saveBatch(Arrays.asList(new H2User("saveBatch5"), new H2User("saveBatch6"), new H2User("saveBatch7"), new H2User("saveBatch8")), 2));
+        Assertions.assertTrue(userService.saveBatch(List.of(new H2User("saveBatch5"), new H2User("saveBatch6"), new H2User("saveBatch7"), new H2User("saveBatch8")), 2));
         Assertions.assertEquals(9, userService.count(new QueryWrapper<H2User>().like("name", "saveBatch")));
     }
 
@@ -431,7 +434,7 @@ class H2UserTest extends BaseTest {
                 new H2User(1L, "andy")
             ));
         } catch (Exception e) {
-            Assertions.assertTrue(e instanceof DataAccessException);
+            Assertions.assertInstanceOf(DataAccessException.class, e);
         }
     }
 
@@ -481,7 +484,7 @@ class H2UserTest extends BaseTest {
         // Preparing: select * from h2user WHERE (name LIKE ?)
         // Parameters: %y%%(String)
         List<H2User> h2Users = userService.testCustomSqlSegment(new QueryWrapper<H2User>().like("name", "y%"));
-        Assertions.assertTrue(2 == h2Users.size());
+        Assertions.assertEquals(2, h2Users.size());
     }
 
     @Test
@@ -495,11 +498,9 @@ class H2UserTest extends BaseTest {
         final Select select = (Select) CCJSqlParserUtil.parse(targetSql1);
         Assertions.assertEquals(select.toString(), targetSql1);
 
-
         final String targetSql2 = "SELECT * FROM user WHERE id NOT IN (?)";
         final Select select2 = (Select) CCJSqlParserUtil.parse(targetSql2);
         Assertions.assertEquals(select2.toString(), targetSql2);
-
 
         final String targetSql3 = "SELECT * FROM user WHERE id IS NOT NULL";
         final Select select3 = (Select) CCJSqlParserUtil.parse(targetSql3);
@@ -524,7 +525,7 @@ class H2UserTest extends BaseTest {
      * @return 返回模拟的一群人
      */
     private List<H2User> mockUser(int size, long cardinal) {
-        return new AbstractList<H2User>() {
+        return new AbstractList<>() {
 
             @Override
             public H2User get(int index) {
@@ -616,12 +617,30 @@ class H2UserTest extends BaseTest {
         userService.removeById(h2User);
         userService.removeByIds(Arrays.asList(10000L, h2User));
         userService.removeByIds(Arrays.asList(10000L, h2User), false);
+        h2User = new H2User("test");
+        H2UserMapper h2UserMapper = (H2UserMapper) userService.getBaseMapper();
+        h2UserMapper.insert(h2User);
+        h2UserMapper.deleteById(h2User.getTestId());
+        h2User = h2UserMapper.getById(h2User.getTestId());
+        Assertions.assertNotNull(h2User.getLastUpdatedDt());
+
+        h2User = new H2User("test");
+        h2UserMapper.insert(h2User);
+        h2UserMapper.deleteById(h2User.getTestId(), false);
+        h2User = h2UserMapper.getById(h2User.getTestId());
+        Assertions.assertNull(h2User.getLastUpdatedDt());
+
+        h2User = new H2User("test");
+        h2UserMapper.insert(h2User);
+        h2UserMapper.deleteById(String.valueOf(h2User.getTestId()));
+        h2User = h2UserMapper.getById(h2User.getTestId());
+        Assertions.assertNotNull(h2User.getLastUpdatedDt());
     }
 
     @Test
     void testPageOrderBy() {
         // test https://gitee.com/baomidou/mybatis-plus/issues/I4BGE2
-        Page page = Page.of(1, 10);
+        Page<H2User> page = Page.of(1, 10);
         Assertions.assertTrue(userService.page(page, Wrappers.<H2User>query().select("test_id,name")
             .orderByDesc("test_id")).getPages() > 0);
         Assertions.assertTrue(userService.page(page, Wrappers.<H2User>lambdaQuery()
@@ -630,7 +649,7 @@ class H2UserTest extends BaseTest {
 
     @Test
     void testPageNegativeSize() {
-        Page page = Page.of(1, -1);
+        Page<H2User> page = Page.of(1, -1);
         userService.lambdaQuery().page(page);
         Assertions.assertEquals(page.getTotal(), 0);
         Assertions.assertEquals(userService.lambdaQuery().list(Page.of(1, -1, false)).size(), page.getRecords().size());
@@ -662,10 +681,10 @@ class H2UserTest extends BaseTest {
         condition.setName("Tomcat");
         H2User user = userService.lambdaQuery(condition).one();
         Assertions.assertNotNull(user);
-        Assertions.assertTrue("Tomcat".equals(user.getName()));
+        Assertions.assertEquals("Tomcat", user.getName());
         H2User h2User = userService.lambdaQuery().setEntity(condition).one();
         Assertions.assertNotNull(h2User);
-        Assertions.assertTrue("Tomcat".equals(h2User.getName()));
+        Assertions.assertEquals("Tomcat", h2User.getName());
     }
 
     @Test
@@ -850,22 +869,25 @@ class H2UserTest extends BaseTest {
             .groupBy(H2User::getAge, H2User::getTestType).groupBy(true, H2User::getAge, H2User::getTestType);
 
         // 重写方法保留支持.
-        new LambdaQueryChainWrapper<H2User>(H2User.class) {
+        new LambdaQueryChainWrapper<>(H2User.class) {
             @Override
             protected LambdaQueryChainWrapper<H2User> doOrderByDesc(boolean condition, SFunction<H2User, ?> column, List<SFunction<H2User, ?>> columns) {
                 System.out.println("-------处理OrderByDesc----------");
                 return super.doOrderByDesc(condition, column, columns);
             }
+
             @Override
-            protected LambdaQueryChainWrapper<H2User> doOrderByAsc(boolean condition, SFunction<H2User, ?> column,  List<SFunction<H2User, ?>> columns) {
+            protected LambdaQueryChainWrapper<H2User> doOrderByAsc(boolean condition, SFunction<H2User, ?> column, List<SFunction<H2User, ?>> columns) {
                 System.out.println("-------处理OrderByAsc----------");
                 return super.doOrderByAsc(condition, column, columns);
             }
+
             @Override
             protected LambdaQueryChainWrapper<H2User> doOrderBy(boolean condition, boolean isAsc, SFunction<H2User, ?> column, List<SFunction<H2User, ?>> columns) {
                 System.out.println("-------处理OrderBy----------");
                 return super.doOrderBy(condition, isAsc, column, columns);
             }
+
             @Override
             protected LambdaQueryChainWrapper<H2User> doGroupBy(boolean condition, SFunction<H2User, ?> column, List<SFunction<H2User, ?>> columns) {
                 System.out.println("-------处理GroupBy----------");
@@ -910,7 +932,7 @@ class H2UserTest extends BaseTest {
             System.out.println(resultObject);
         });
         System.out.println("---------------selectBatchIds-------------------");
-        baseMapper.selectBatchIds(ids, resultContext -> System.out.println(resultContext.getResultObject()));
+        baseMapper.selectByIds(ids, resultContext -> System.out.println(resultContext.getResultObject()));
         System.out.println("---------------selectList-------------------");
         System.out.println("---------------selectObjs-------------------");
         baseMapper.selectObjs(Wrappers.emptyWrapper(), (ResultHandler<Long>) resultContext -> System.out.println(resultContext.getResultObject()));

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2024, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,8 @@ public class DbQueryDecorator extends AbstractDbQuery {
     @Override
     public String tablesSql() {
         String tablesSql = dbQuery.tablesSql();
-        if (DbType.POSTGRE_SQL == dbType || DbType.KINGBASE_ES == dbType || DbType.DB2 == dbType || DbType.ORACLE == dbType) {
+        if (DbType.POSTGRE_SQL == dbType || DbType.KINGBASE_ES == dbType
+            || DbType.DB2 == dbType || DbType.ORACLE == dbType || DbType.DM == dbType) {
             tablesSql = String.format(tablesSql, this.schema);
         }
         if (strategyConfig.isEnableSqlFilter()) {
@@ -108,7 +109,7 @@ public class DbQueryDecorator extends AbstractDbQuery {
             tableFieldsSql = String.format(tableFieldsSql.replace("#schema", this.schema), tableName, tableName.toUpperCase());
         } else if (DbType.DM == dbType) {
             tableName = tableName.toUpperCase();
-            tableFieldsSql = String.format(tableFieldsSql, tableName,this.schema);
+            tableFieldsSql = String.format(tableFieldsSql, this.schema, tableName);
         } else if (DbType.POSTGRE_SQL == dbType) {
             tableFieldsSql = String.format(tableFieldsSql, tableName, tableName, tableName,this.schema);
         } else {
@@ -161,6 +162,11 @@ public class DbQueryDecorator extends AbstractDbQuery {
     @Override
     public String[] fieldCustom() {
         return dbQuery.fieldCustom();
+    }
+
+    @Override
+    public String primaryKeySql(DataSourceConfig dataSourceConfig, String tableName) {
+        return dbQuery.primaryKeySql(dataSourceConfig, tableName);
     }
 
     public Map<String, Object> getCustomFields(ResultSet resultSet) {

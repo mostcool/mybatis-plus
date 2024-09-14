@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2023, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2024, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,21 +22,24 @@ import com.baomidou.mybatisplus.core.toolkit.EncryptUtils;
 import com.baomidou.mybatisplus.core.toolkit.PluginUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.extension.parser.JsqlParserSupport;
+import com.baomidou.mybatisplus.extension.toolkit.SqlParserUtils;
 import lombok.Data;
 import net.sf.jsqlparser.expression.BinaryExpression;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.expression.Function;
+import net.sf.jsqlparser.expression.operators.arithmetic.Subtraction;
 import net.sf.jsqlparser.expression.operators.conditional.OrExpression;
 import net.sf.jsqlparser.expression.operators.relational.InExpression;
 import net.sf.jsqlparser.expression.operators.relational.NotEqualsTo;
+import net.sf.jsqlparser.expression.operators.relational.ParenthesedExpressionList;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.delete.Delete;
+import net.sf.jsqlparser.statement.select.FromItem;
 import net.sf.jsqlparser.statement.select.Join;
+import net.sf.jsqlparser.statement.select.ParenthesedSelect;
 import net.sf.jsqlparser.statement.select.PlainSelect;
 import net.sf.jsqlparser.statement.select.Select;
-import net.sf.jsqlparser.statement.select.SelectBody;
-import net.sf.jsqlparser.statement.select.SubSelect;
 import net.sf.jsqlparser.statement.update.Update;
 import org.apache.ibatis.executor.statement.StatementHandler;
 import org.apache.ibatis.mapping.BoundSql;
@@ -99,7 +102,9 @@ public class IllegalSQLInnerInterceptor extends JsqlParserSupport implements Inn
         PluginUtils.MPStatementHandler mpStatementHandler = PluginUtils.mpStatementHandler(sh);
         MappedStatement ms = mpStatementHandler.mappedStatement();
         SqlCommandType sct = ms.getSqlCommandType();
-        if (sct == SqlCommandType.INSERT || InterceptorIgnoreHelper.willIgnoreIllegalSql(ms.getId())) return;
+        if (sct == SqlCommandType.INSERT || InterceptorIgnoreHelper.willIgnoreIllegalSql(ms.getId())) {
+            return;
+        }
         BoundSql boundSql = mpStatementHandler.boundSql();
         String originalSql = boundSql.getSql();
         logger.debug("检查SQL是否合规，SQL:" + originalSql);
@@ -115,9 +120,14 @@ public class IllegalSQLInnerInterceptor extends JsqlParserSupport implements Inn
 
     @Override
     protected void processSelect(Select select, int index, String sql, Object obj) {
-        SelectBody selectBody = select.getSelectBody();
-        if (selectBody instanceof PlainSelect) {
-            PlainSelect plainSelect = (PlainSelect) selectBody;
+        if (select instanceof PlainSelect) {
+            PlainSelect plainSelect = (PlainSelect) select;
+            FromItem fromItem = ((PlainSelect) select).getFromItem();
+            while (fromItem instanceof ParenthesedSelect) {
+                ParenthesedSelect parenthesedSelect = (ParenthesedSelect) fromItem;
+                plainSelect = (PlainSelect) parenthesedSelect.getSelect();
+                fromItem = plainSelect.getFromItem();
+            }
             Expression where = plainSelect.getWhere();
             Assert.notNull(where, "非法SQL，必须要有where条件");
             Table table = (Table) plainSelect.getFromItem();
@@ -153,6 +163,10 @@ public class IllegalSQLInnerInterceptor extends JsqlParserSupport implements Inn
      * @param expression ignore
      */
     private void validExpression(Expression expression) {
+        while (expression instanceof ParenthesedExpressionList) {
+            ParenthesedExpressionList<Expression> parenthesis = (ParenthesedExpressionList) expression;
+            expression = parenthesis.get(0);
+        }
         //where条件使用了 or 关键字
         if (expression instanceof OrExpression) {
             OrExpression orExpression = (OrExpression) expression;
@@ -170,14 +184,14 @@ public class IllegalSQLInnerInterceptor extends JsqlParserSupport implements Inn
                 Function function = (Function) binaryExpression.getLeftExpression();
                 throw new MybatisPlusException("非法SQL，where条件中不能使用数据库函数，错误函数信息：" + function.toString());
             }
-            if (binaryExpression.getRightExpression() instanceof SubSelect) {
-                SubSelect subSelect = (SubSelect) binaryExpression.getRightExpression();
+            if (binaryExpression.getRightExpression() instanceof Subtraction) {
+                Subtraction subSelect = (Subtraction) binaryExpression.getRightExpression();
                 throw new MybatisPlusException("非法SQL，where条件中不能使用子查询，错误子查询SQL信息：" + subSelect.toString());
             }
         } else if (expression instanceof InExpression) {
             InExpression inExpression = (InExpression) expression;
-            if (inExpression.getRightItemsList() instanceof SubSelect) {
-                SubSelect subSelect = (SubSelect) inExpression.getRightItemsList();
+            if (inExpression.getRightExpression() instanceof Subtraction) {
+                Subtraction subSelect = (Subtraction) inExpression.getRightExpression();
                 throw new MybatisPlusException("非法SQL，where条件中不能使用子查询，错误子查询SQL信息：" + subSelect.toString());
             }
         }
@@ -214,23 +228,25 @@ public class IllegalSQLInnerInterceptor extends JsqlParserSupport implements Inn
     private void validUseIndex(Table table, String columnName, Connection connection) {
         //是否使用索引
         boolean useIndexFlag = false;
-
-        String tableInfo = table.getName();
-        //表存在的索引
-        String dbName = null;
-        String tableName;
-        String[] tableArray = tableInfo.split("\\.");
-        if (tableArray.length == 1) {
-            tableName = tableArray[0];
-        } else {
-            dbName = tableArray[0];
-            tableName = tableArray[1];
-        }
-        List<IndexInfo> indexInfos = getIndexInfos(dbName, tableName, connection);
-        for (IndexInfo indexInfo : indexInfos) {
-            if (null != columnName && columnName.equalsIgnoreCase(indexInfo.getColumnName())) {
-                useIndexFlag = true;
-                break;
+        if (StringUtils.isNotBlank(columnName)) {
+            String tableInfo = table.getName();
+            //表存在的索引
+            String dbName = null;
+            String tableName;
+            String[] tableArray = tableInfo.split("\\.");
+            if (tableArray.length == 1) {
+                tableName = tableArray[0];
+            } else {
+                dbName = tableArray[0];
+                tableName = tableArray[1];
+            }
+            columnName = SqlParserUtils.removeWrapperSymbol(columnName);
+            List<IndexInfo> indexInfos = getIndexInfos(dbName, tableName, connection);
+            for (IndexInfo indexInfo : indexInfos) {
+                if (indexInfo.getColumnName().equalsIgnoreCase(columnName)) {
+                    useIndexFlag = true;
+                    break;
+                }
             }
         }
         if (!useIndexFlag) {
@@ -286,8 +302,10 @@ public class IllegalSQLInnerInterceptor extends JsqlParserSupport implements Inn
             }
 
             //获得右边表达式，并分解
-            Expression rightExpression = ((BinaryExpression) expression).getRightExpression();
-            validExpression(rightExpression);
+            if (joinTable != null) {
+                Expression rightExpression = ((BinaryExpression) expression).getRightExpression();
+                validExpression(rightExpression);
+            }
         }
     }
 
@@ -323,7 +341,7 @@ public class IllegalSQLInnerInterceptor extends JsqlParserSupport implements Inn
                 DatabaseMetaData metadata = conn.getMetaData();
                 String catalog = StringUtils.isBlank(dbName) ? conn.getCatalog() : dbName;
                 String schema = StringUtils.isBlank(dbName) ? conn.getSchema() : dbName;
-                rs = metadata.getIndexInfo(catalog, schema, tableName, false, true);
+                rs = metadata.getIndexInfo(catalog, schema, SqlParserUtils.removeWrapperSymbol(tableName), false, true);
                 indexInfos = new ArrayList<>();
                 while (rs.next()) {
                     //索引中的列序列号等于1，才有效
