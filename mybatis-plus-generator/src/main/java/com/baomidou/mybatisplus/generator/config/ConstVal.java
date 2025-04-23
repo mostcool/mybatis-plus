@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2024, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,4 +91,10 @@ public interface ConstVal {
      * @see com.baomidou.mybatisplus.core.metadata.TableInfoHelper.DEFAULT_ID_NAME
      */
     String DEFAULT_ID_NAME = "id";
+
+    /**
+     * 主键
+     * @since 3.5.12
+     */
+    String PRIMARY = "PRIMARY";
 }

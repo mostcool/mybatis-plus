@@ -1,9 +1,13 @@
 package #(package.Mapper);
 
-import #(package.Entity).#(entity);
-import #(superMapperClassPackage);
-#if(mapperAnnotationClass)
-import #(mapperAnnotationClass.name);
+#for(pkg : importMapperFrameworkPackages)
+import #(pkg);
+#end
+#if(!importMapperJavaPackages.isEmpty())
+
+#for(pkg : importMapperJavaPackages)
+import #(pkg);
+#end
 #end
 
 /**
@@ -18,9 +22,19 @@ import #(mapperAnnotationClass.name);
 @#(mapperAnnotationClass.simpleName)
 #end
 #if(kotlin)
-interface #(table.mapperName) : #(superMapperClass)<#(entity)>
+interface #(table.mapperName) : #(superMapperClass)<#(entity)> {
 #else
 public interface #(table.mapperName) extends #(superMapperClass)<#(entity)> {
-
-}
 #end
+
+#for(m : mapperMethodList)
+    /**
+     * generate by #(m.indexName)
+     *
+     #for(f : m.tableFieldList)
+     * @param #(f.propertyName) #(f.comment)
+     #end
+     */
+    #(m.method)
+#end
+}

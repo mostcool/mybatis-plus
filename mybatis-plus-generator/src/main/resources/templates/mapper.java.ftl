@@ -1,9 +1,13 @@
 package ${package.Mapper};
 
-import ${package.Entity}.${entity};
-import ${superMapperClassPackage};
-<#if mapperAnnotationClass??>
-import ${mapperAnnotationClass.name};
+<#list importMapperFrameworkPackages as pkg>
+import ${pkg};
+</#list>
+<#if importMapperJavaPackages?size !=0>
+
+  <#list importMapperJavaPackages as pkg>
+import ${pkg};
+   </#list>
 </#if>
 
 /**
@@ -18,9 +22,19 @@ import ${mapperAnnotationClass.name};
 @${mapperAnnotationClass.simpleName}
 </#if>
 <#if kotlin>
-interface ${table.mapperName} : ${superMapperClass}<${entity}>
+interface ${table.mapperName} : ${superMapperClass}<${entity}> {
 <#else>
 public interface ${table.mapperName} extends ${superMapperClass}<${entity}> {
-
-}
 </#if>
+
+<#list mapperMethodList as m>
+    /**
+     * generate by ${m.indexName}
+     *
+    <#list m.tableFieldList as f>
+     * @param ${f.propertyName} ${f.comment}
+    </#list>
+     */
+    ${m.method}
+</#list>
+}

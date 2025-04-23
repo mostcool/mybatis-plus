@@ -1,6 +1,5 @@
 dependencies {
     api project(":mybatis-plus-annotation")
-    api "${lib.'jsqlparser'}"
     api "${lib.mybatis}"
 
     implementation "${lib.cglib}"
@@ -8,4 +7,6 @@ dependencies {
     implementation "${lib.'imadcn'}"
 
     testImplementation "${lib.'logback-classic'}"
+    testImplementation "${lib."mybatis-spring"}"
+    testImplementation "${lib.'spring-jdbc'}"
 }

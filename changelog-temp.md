@@ -1,27 +1,16 @@
-- fix: 解决optimizeJoinOfCountSql反序列化不支持问题
-- fix: 解决Db工具类批量操作使用rewriteBatchedStatements=true返回值不准确
-- fix: 修复逻辑删除填充与乐观锁冲突
-- fix: 修复IllegalSQLInnerInterceptor分析嵌套count语句错误
-- fix: 升级jsqlParser5.0解决 for update 语句错误
-- fix: 修复处自增自减负数情况导致jsqlParser解析优化错误
-- fix: 修复removeMapper缓存清理不完全
-- fix: 修复SqlServerQuery查询表注释乱码
-- opt: Page属性访问调整为private,重写toString方法
-- opt: 主键生成策略(uuid)不支持的类型打印警告日志
-- opt: MybatisPlusException转化为PersistenceException子类
-- feat: 增加deleteByIds空集合处理
-- feat: 重命名selectBatchIds方法为selectByIds
-- feat: 支持tableName与schema属性占位符配
-- feat: 代码生成器增加对虚拟列的属性获取
-- feat: chain wrapper to lambda chain wrapper #6314
-- feat: 代码生成器增加手动指定数据库驱动兼容不能自动注册的驱动实现
-- feat: 升级kotlin2.0.0
-- feat: 升级SpringBoot3.3.2
-- feat: 升级fastjson2.0.52
-- feat: 升级mybatis-spring3.0.4
-- feat: 升级spring-cloud-commons4.1.4
-- feat: 部分支持依赖升级更新
-- feat: 支持GoldenDB数据库
-- feat: 支持Duckdb数据库
-- feat: 支持Derby数据库
-- feat: 支持Vastbase数据库
+- fix: 修复批量操作异步执行首次出现`NoSuchElementException`错误
+- fix: 修复`entity.java.btl`生成`toString`方法样式错误
+- fix: 修复`entity.java.ftl`模板类注释与导包缺少换行
+- opt: 支持手动指定`CompatibleSet`实现
+- opt: 去除`entity.kt.btl`模板`@Override`注解
+- opt: 解决`serviceImpl.java.ej`生成格式不统一
+- opt: 去除`mapper.java.ftl`多余的换行生成
+- opt: 去除`entity.kt.vm`,`entity.kt.ej`,`entity.kt.btl`导包结束分隔符
+- opt: 去除`controller.java.ej`,`controller.java.vm`多余的换行
+- opt: 去除`entity.kt.btl`生成属性多余的空格
+- opt: 代码生成器处理`PRIMARY_KEY_`为开头的主键索引情况
+- opt: 统一`entity.java.btl`,`entity.java.ej`,`entity.java.ftl`,`entity.java.vm` 生成的`toString`方法样式
+- opt: 重构`SqlRunner`执行`SQL`语句 (动态传参，不再根据参数值生成执行`SQL`)
+- opt: 增强`SqlRunner`执行(支持单参数使用`Map`({key}),`List`({index}),`JavaBean`({property})获取值)
+- opt: 改进`MybatisUtils`对自`SqlSessionFactory`的提取(支持自定义sqlSessionTemplate子类)
+-

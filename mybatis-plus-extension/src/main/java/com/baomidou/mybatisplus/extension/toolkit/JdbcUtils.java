@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2024, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -93,13 +93,13 @@ public class JdbcUtils {
             return DbType.KINGBASE_ES;
         } else if (url.contains(":phoenix:")) {
             return DbType.PHOENIX;
-        } else if (url.contains(":zenith:")) {
+        } else if (url.contains(":gaussdb:") || url.contains(":zenith:")) {
             return DbType.GAUSS;
         } else if (url.contains(":gbase:")) {
             return DbType.GBASE;
         } else if (url.contains(":gbasedbt-sqli:") || url.contains(":informix-sqli:")) {
             return DbType.GBASE_8S;
-        } else if (url.contains(":gbase8s-pg:")){
+        } else if (url.contains(":gbase8s-pg:")) {
             return DbType.GBASE8S_PG;
         } else if (url.contains(":gbase8c:")) {
             return DbType.GBASE_8C;
@@ -131,7 +131,7 @@ public class JdbcUtils {
             return DbType.REDSHIFT;
         } else if (url.contains(":opengauss:")) {
             return DbType.OPENGAUSS;
-        } else if (url.contains(":taos:") || url.contains(":taos-rs:")) {
+        } else if (url.contains(":taos:") || url.contains(":taos-rs:") || url.contains(":taos-ws:")) {
             return DbType.TDENGINE;
         } else if (url.contains(":informix")) {
             return DbType.INFORMIX;
@@ -149,8 +149,12 @@ public class JdbcUtils {
             return DbType.VASTBASE;
         } else if (url.contains(":goldendb:")) {
             return DbType.GOLDENDB;
-        } else if (url.contains(":duckdb:")){
+        } else if (url.contains(":duckdb:")) {
             return DbType.DUCKDB;
+        } else if (url.contains(":yasdb:")) {
+            return DbType.YASDB;
+        } else if (url.contains(":hive2:") || url.contains(":inceptor2:")) {
+            return DbType.HIVE2;
         } else {
             logger.warn("The jdbcUrl is " + jdbcUrl + ", Mybatis Plus Cannot Read Database type or The Database's Not Supported!");
             return DbType.OTHER;

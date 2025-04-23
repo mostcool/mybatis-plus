@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2024, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,6 +73,8 @@ public class DialectFactory {
             } else if (dbType == DbType.TRINO
                 || dbType == DbType.PRESTO) {
                 dialect = new TrinoDialect();
+            } else if (dbType == DbType.HIVE2) {
+                dialect = new Hive2Dialect();
             }
             DIALECT_ENUM_MAP.put(dbType, dialect);
         }

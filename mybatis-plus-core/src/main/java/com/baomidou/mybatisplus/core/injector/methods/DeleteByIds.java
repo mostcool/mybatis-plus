@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2024, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,14 +62,17 @@ public class DeleteByIds extends AbstractMethod {
             return addUpdateMappedStatement(mapperClass, modelClass, methodName, sqlSource);
         } else {
             sqlMethod = SqlMethod.DELETE_BY_IDS;
-            sql = String.format(sqlMethod.getSql(), tableInfo.getTableName(), tableInfo.getKeyColumn(),
-                SqlScriptUtils.convertForeach(
-                    SqlScriptUtils.convertChoose("@org.apache.ibatis.type.SimpleTypeRegistry@isSimpleType(item.getClass())",
-                        "#{item}", "#{item." + tableInfo.getKeyProperty() + "}"),
-                    COLL, null, "item", COMMA));
+            sql = String.format(sqlMethod.getSql(), tableInfo.getTableName(), tableInfo.getKeyColumn(), getConvertForeachScript(tableInfo));
             SqlSource sqlSource = super.createSqlSource(configuration, sql, Object.class);
             return this.addDeleteMappedStatement(mapperClass, methodName, sqlSource);
         }
+    }
+
+    protected String getConvertForeachScript(TableInfo tableInfo) {
+        return SqlScriptUtils.convertForeach(
+            SqlScriptUtils.convertChoose("item!=null and @org.apache.ibatis.reflection.SystemMetaObject@forObject(item).findProperty('" + tableInfo.getKeyProperty() + "', false) != null",
+                "#{item." + tableInfo.getKeyProperty() + "}", "#{item}"),
+            COLL, null, "item", COMMA);
     }
 
     /**
@@ -89,11 +92,7 @@ public class DeleteByIds extends AbstractMethod {
         }
         sqlSet += StringPool.EMPTY + tableInfo.getLogicDeleteSql(false, false);
         return String.format(sqlMethod.getSql(), tableInfo.getTableName(),
-            sqlSet, tableInfo.getKeyColumn(), SqlScriptUtils.convertForeach(
-                SqlScriptUtils.convertChoose("@org.apache.ibatis.type.SimpleTypeRegistry@isSimpleType(item.getClass())",
-                    "#{item}", "#{item." + tableInfo.getKeyProperty() + "}"),
-                COLL, null, "item", COMMA),
-            tableInfo.getLogicDeleteSql(true, true));
+            sqlSet, tableInfo.getKeyColumn(), getConvertForeachScript(tableInfo), tableInfo.getLogicDeleteSql(true, true));
     }
 
 }

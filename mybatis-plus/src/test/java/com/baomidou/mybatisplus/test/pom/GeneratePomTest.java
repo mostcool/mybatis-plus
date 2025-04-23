@@ -41,9 +41,19 @@ class GeneratePomTest {
                 String artifactId = $this.s("artifactId").text();
                 dependenciesMap.put(artifactId, new Dependency(artifactId, $this.s("scope").text(), Boolean.parseBoolean($this.s("optional").text())));
             });
-            Dependency extension = dependenciesMap.get("mybatis-plus-extension");
+            Dependency extension = dependenciesMap.get("mybatis-plus-spring");
             Assertions.assertEquals("compile", extension.getScope());
             Assertions.assertFalse(extension.isOptional());
+            Dependency mybatisSpring = dependenciesMap.get("mybatis-spring");
+            Assertions.assertEquals("compile", mybatisSpring.getScope());
+            Assertions.assertTrue(mybatisSpring.isOptional());
+            Dependency kotlinStdlib = dependenciesMap.get("kotlin-stdlib-jdk8");
+            Assertions.assertEquals("compile", kotlinStdlib.getScope());
+            Assertions.assertTrue(kotlinStdlib.isOptional());
+            Dependency jsqlparserLib = dependenciesMap.get("mybatis-plus-jsqlparser-4.9");
+            Assertions.assertEquals("compile", jsqlparserLib.getScope());
+            Assertions.assertTrue(jsqlparserLib.isOptional());
+
         }
     }
 

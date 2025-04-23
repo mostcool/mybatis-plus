@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2024, baomidou (jobob@qq.com).
+ * Copyright (c) 2011-2025, baomidou (jobob@qq.com).
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,7 @@ public class SqlInjectionUtils {
      * @param text 待处理字段
      */
     public static String removeEscapeCharacter(String text) {
-        Objects.nonNull(text);
+        Objects.requireNonNull(text);
         return text.replaceAll("\"", "").replaceAll("'", "");
     }
 }
