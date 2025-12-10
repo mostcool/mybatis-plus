@@ -57,9 +57,19 @@ public interface CompatibleSet {
      *
      * @param mapper Mapper对象
      * @return 真实对象
+     * @since 3.5.12
      */
     default Object getProxyTargetObject(Object mapper) {
         return null;
+    }
+
+    /**
+     * 传递上下文对象
+     * @param context 容器上下文
+     * @since 3.5.13
+     */
+    default void setContext(Object context) {
+
     }
 
 }

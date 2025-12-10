@@ -99,6 +99,9 @@ public class DefaultQuery extends AbstractDatabaseQuery {
         if (strategyConfig.getLikeTable() != null) {
             tableNamePattern = strategyConfig.getLikeTable().getValue();
         }
+        if (strategyConfig.getNotLikeTable() != null) {
+            LOGGER.warn("Unsupported 'notLikeTable' configuration");
+        }
         return databaseMetaDataWrapper.getTables(tableNamePattern, skipView ? new String[]{"TABLE"} : new String[]{"TABLE", "VIEW"});
     }
 
@@ -107,6 +110,7 @@ public class DefaultQuery extends AbstractDatabaseQuery {
         Map<String, DatabaseMetaDataWrapper.Column> columnsInfoMap = getColumnsInfo(tableName);
         Entity entity = strategyConfig.entity();
         columnsInfoMap.forEach((k, columnInfo) -> {
+            TableField.MetaInfo metaInfo = new TableField.MetaInfo(columnInfo, tableInfo);
             String columnName = columnInfo.getName();
             TableField field = new TableField(this.configBuilder, columnName);
             // 处理ID
@@ -114,13 +118,9 @@ public class DefaultQuery extends AbstractDatabaseQuery {
                 field.primaryKey(columnInfo.isAutoIncrement());
                 tableInfo.setHavePrimaryKey(true);
                 if (field.isKeyIdentityFlag() && entity.getIdType() != null) {
-                    LOGGER.warn("当前表[{}]的主键为自增主键，会导致全局主键的ID类型设置失效!", tableName);
+                    LOGGER.warn("The primary key of the current table [{}] is configured as auto-incrementing, which will override the global primary key ID type strategy.", tableName);
                 }
             }
-            field.setColumnName(columnName).setComment(columnInfo.getRemarks());
-            String propertyName = entity.getNameConvert().propertyNameConvert(field);
-            // 设置字段的元数据信息
-            TableField.MetaInfo metaInfo = new TableField.MetaInfo(columnInfo, tableInfo);
             IColumnType columnType;
             ITypeConvertHandler typeConvertHandler = dataSourceConfig.getTypeConvertHandler();
             if (typeConvertHandler != null) {
@@ -128,8 +128,9 @@ public class DefaultQuery extends AbstractDatabaseQuery {
             } else {
                 columnType = typeRegistry.getColumnType(metaInfo);
             }
+            field.setColumnName(columnName).setColumnType(columnType).setComment(columnInfo.getRemarks()).setMetaInfo(metaInfo);
+            String propertyName = entity.getNameConvert().propertyNameConvert(field);
             field.setPropertyName(propertyName, columnType);
-            field.setMetaInfo(metaInfo);
             tableInfo.addField(field);
         });
         tableInfo.setIndexList(getIndex(tableName));

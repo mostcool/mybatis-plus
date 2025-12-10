@@ -12,6 +12,7 @@ dependencies {
     implementation "${lib."slf4j-api"}"
     implementation "${lib."p6spy"}"
     implementation "${lib."jackson"}"
+    implementation "${lib."jackson3"}"
     implementation "${lib."fastjson"}"
     implementation "${lib."gson"}"
     implementation "${lib['mybatis-thymeleaf']}"
@@ -20,5 +21,9 @@ dependencies {
     testImplementation "${lib."spring-context-support"}"
     testImplementation "${lib.h2}"
     testImplementation "${lib.mysql}"
+    testImplementation "${lib.postgresql}"
+    testImplementation "${lib.oracle}"
+    testImplementation "${lib.sqlite}"
+    testImplementation lib.dm as ConfigurableFileTree
     testImplementation "${lib.'logback-classic'}"
 }
