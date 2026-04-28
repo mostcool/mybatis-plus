@@ -16,7 +16,7 @@ import java.lang.reflect.Field;
  */
 public class Jackson3TypeHandler extends AbstractJsonTypeHandler<Object> {
 
-    private static ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static ObjectMapper OBJECT_MAPPER;
 
     public Jackson3TypeHandler(Class<?> type) {
         super(type);
@@ -40,7 +40,7 @@ public class Jackson3TypeHandler extends AbstractJsonTypeHandler<Object> {
     }
 
     public static ObjectMapper getObjectMapper() {
-        return OBJECT_MAPPER == null ? Instance.OBJECT_MAPPER: new ObjectMapper();
+        return OBJECT_MAPPER == null ? Instance.OBJECT_MAPPER: OBJECT_MAPPER;
     }
 
     public static void setObjectMapper(ObjectMapper objectMapper) {
