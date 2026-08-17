@@ -45,7 +45,8 @@ public class DefaultSqlInjector extends AbstractSqlInjector {
             .add(new SelectCount())
             .add(new SelectMaps())
             .add(new SelectObjs())
-            .add(new SelectList());
+            .add(new SelectList())
+            .add(new SelectWithCursor());
         if (tableInfo.havePK()) {
             builder.add(new DeleteById())
                 .add(new DeleteByIds())
@@ -53,8 +54,7 @@ public class DefaultSqlInjector extends AbstractSqlInjector {
                 .add(new SelectById())
                 .add(new SelectByIds());
         } else {
-            logger.warn(String.format("%s ,Not found @TableId annotation, Cannot use Mybatis-Plus 'xxById' Method.",
-                tableInfo.getEntityType()));
+            logger.warn(tableInfo.getEntityType() + " Not found @TableId annotation, Cannot use Mybatis-Plus 'xxById' Method.");
         }
         return builder.build().collect(toList());
     }

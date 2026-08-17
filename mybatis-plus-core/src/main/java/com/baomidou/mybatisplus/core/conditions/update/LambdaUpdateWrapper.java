@@ -21,9 +21,9 @@ import com.baomidou.mybatisplus.core.conditions.segments.MergeSegments;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Constants;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.core.toolkit.sql.SqlUtils;
 import com.baomidou.mybatisplus.core.toolkit.support.SFunction;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -92,18 +92,12 @@ public class LambdaUpdateWrapper<T> extends AbstractLambdaWrapper<T, LambdaUpdat
 
     @Override
     public LambdaUpdateWrapper<T> setIncrBy(boolean condition, SFunction<T, ?> column, Number val) {
-        return maybeDo(condition, () -> {
-            String realColumn = columnToString(column);
-            sqlSet.add(String.format("%s=%s + %s", realColumn, realColumn, val instanceof BigDecimal ? ((BigDecimal) val).toPlainString() : val));
-        });
+        return maybeDo(condition, () -> sqlSet.add(SqlUtils.selfOperation(columnToString(column), true, val)));
     }
 
     @Override
     public LambdaUpdateWrapper<T> setDecrBy(boolean condition, SFunction<T, ?> column, Number val) {
-        return maybeDo(condition, () -> {
-            String realColumn = columnToString(column);
-            sqlSet.add(String.format("%s=%s - %s", realColumn, realColumn, val instanceof BigDecimal ? ((BigDecimal) val).toPlainString() : val));
-        });
+        return maybeDo(condition, () -> sqlSet.add(SqlUtils.selfOperation(columnToString(column), false, val)));
     }
 
     @Override
@@ -118,6 +112,16 @@ public class LambdaUpdateWrapper<T> extends AbstractLambdaWrapper<T, LambdaUpdat
     protected LambdaUpdateWrapper<T> instance() {
         return new LambdaUpdateWrapper<>(getEntity(), getEntityClass(), null, paramNameSeq, paramNameValuePairs,
             new MergeSegments(), paramAlias, SharedString.emptyString(), SharedString.emptyString(), SharedString.emptyString());
+    }
+
+    @Override
+    protected void onParamAliasChanged(String oldParamAlias, String paramAlias) {
+        if (sqlSet == null) {
+            return;
+        }
+        String oldPrefix = "#{" + oldParamAlias + Constants.WRAPPER_PARAM_MIDDLE;
+        String newPrefix = "#{" + paramAlias + Constants.WRAPPER_PARAM_MIDDLE;
+        sqlSet.replaceAll(sql -> sql.replace(oldPrefix, newPrefix));
     }
 
     @Override

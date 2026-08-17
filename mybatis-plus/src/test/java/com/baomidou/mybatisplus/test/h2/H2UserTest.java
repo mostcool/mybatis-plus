@@ -72,6 +72,9 @@ class H2UserTest extends BaseTest {
     @Autowired
     private H2StudentMapper h2StudentMapper;
 
+    @Autowired
+    private H2UserMapper h2UserMapper;
+
     public void initBatchLimitation(int limitation) {
         if (sqlSessionFactory instanceof DefaultSqlSessionFactory) {
             Configuration configuration = sqlSessionFactory.getConfiguration();
@@ -481,6 +484,52 @@ class H2UserTest extends BaseTest {
         // Parameters: %y%%(String)
         List<H2User> h2Users = userService.testCustomSqlSegment(new QueryWrapper<H2User>().like("name", "y%"));
         Assertions.assertEquals(2, h2Users.size());
+    }
+
+
+    @Test
+    @Order(33)
+    void testWrapperSetAliasByParam() {
+        // Preparing: select * from h2user WHERE (name LIKE ?)
+        // Parameters: %y%%(String)
+        List<H2User> h2Users = userService.testWrapperSetAliasByParam(new QueryWrapper<H2User>().like("name", "y%"));
+        Assertions.assertEquals(2, h2Users.size());
+    }
+
+    @Test
+    @Order(34)
+    void testMultiWrapperQuery() {
+        // Preparing: select * from h2user a inner join h2user b on a.name=b.name WHERE (a.name LIKE ?) and (b.name = ?)
+        // Parameters: %y%%(String), Jerry(String)
+        QueryWrapper<H2User> leftTable = new QueryWrapper<H2User>() {
+            @Override
+            protected String columnToString(String column) {
+                return "a." + super.columnToString(column);
+            }
+        }.like("name", "y%");
+        System.out.println(leftTable.getCustomSqlSegment());
+        QueryWrapper<H2User> rightTable = new QueryWrapper<H2User>() {
+            @Override
+            protected String columnToString(String column) {
+                return "b." + super.columnToString(column);
+            }
+        }.eq("name", "Jerry");
+        List<H2User> h2Users = userService.testMultiWrapperQuery(leftTable, rightTable);
+        Assertions.assertEquals(1, h2Users.size());
+    }
+
+    @Test
+    @Order(35)
+    void testUpdateWrapperSetAliasByParam() {
+        H2User user = new H2User("aliasBefore", AgeEnum.ONE);
+        Assertions.assertTrue(userService.save(user));
+
+        UpdateWrapper<H2User> updateWrapper = new UpdateWrapper<H2User>()
+            .set("name", "aliasAfter")
+            .eq("test_id", user.getTestId());
+
+        Assertions.assertEquals(1, h2UserMapper.testUpdateWrapperSetAliasByParam(updateWrapper));
+        Assertions.assertEquals("aliasAfter", userService.getById(user.getTestId()).getName());
     }
 
     @Test
@@ -980,7 +1029,8 @@ class H2UserTest extends BaseTest {
     void selectUsersWithCursor() {
         // 使用 try-with-resources 确保 Cursor 被正确关闭
         // 注意：必须添加 @Transactional 注解，保证 SqlSession 在迭代期间保持打开状态
-        try (Cursor<H2User> cursor = userService.getBaseMapper().selectWithCursor(null)) {
+        LambdaQueryWrapper<H2User> lqw = Wrappers.<H2User>lambdaQuery().eq(H2User::getAge, 3);
+        try (Cursor<H2User> cursor = userService.getBaseMapper().selectWithCursor(lqw)) {
 
             // 遍历游标，逐条处理数据
             Iterator<H2User> iterator = cursor.iterator();
@@ -995,8 +1045,7 @@ class H2UserTest extends BaseTest {
             e.printStackTrace();
         }
 
-        H2User user = userService.getBaseMapper().selectOne(null);
-        Assertions.assertNotNull(user);
+        Assertions.assertThrows(TooManyResultsException.class, () -> userService.getBaseMapper().selectOne(lqw));
     }
 
 }

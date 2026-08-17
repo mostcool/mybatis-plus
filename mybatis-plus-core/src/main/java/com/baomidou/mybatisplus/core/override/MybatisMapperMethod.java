@@ -15,8 +15,11 @@
  */
 package com.baomidou.mybatisplus.core.override;
 
+import com.baomidou.mybatisplus.core.conditions.AbstractWrapper;
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Assert;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.binding.BindingException;
 import org.apache.ibatis.binding.MapperMethod;
 import org.apache.ibatis.cursor.Cursor;
@@ -27,11 +30,10 @@ import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.session.SqlSession;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Array;
 import java.lang.reflect.Method;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * 从  {@link MapperMethod} copy 过来 </br>
@@ -45,27 +47,47 @@ import java.util.Optional;
 public class MybatisMapperMethod {
     private final MapperMethod.SqlCommand command;
     private final MapperMethod.MethodSignature method;
+    private final Map<Integer, String> wrapperParamsAliasNameMap;
 
     public MybatisMapperMethod(Class<?> mapperInterface, Method method, Configuration config) {
+        wrapperParamsAliasNameMap = this.getWrapperParamsAliasNameMap(method);
         this.command = new MapperMethod.SqlCommand(config, mapperInterface, method);
         this.method = new MapperMethod.MethodSignature(config, mapperInterface, method);
+    }
+
+    public Map<Integer, String> getWrapperParamsAliasNameMap(Method method) {
+        Annotation[][] paramAnnotations = method.getParameterAnnotations();
+        Class<?>[] parameterTypes = method.getParameterTypes();
+        int paramCount = method.getParameterCount();
+        final Map<Integer, String> map = new HashMap<>();
+        // get names from @Param annotations
+        for (int paramIndex = 0; paramIndex < paramCount; paramIndex++) {
+            for (Annotation annotation : paramAnnotations[paramIndex]) {
+                Class<?> parameterType = parameterTypes[paramIndex];
+                if (annotation instanceof Param && Wrapper.class.isAssignableFrom(parameterType)) {
+                    map.put(paramIndex, ((Param) annotation).value());
+                    break;
+                }
+            }
+        }
+        return map.isEmpty() ? null : Collections.unmodifiableMap(map);
     }
 
     public Object execute(SqlSession sqlSession, Object[] args) {
         Object result;
         switch (command.getType()) {
             case INSERT: {
-                Object param = method.convertArgsToSqlCommandParam(args);
+                Object param = this.convertArgsToSqlCommandParam(args);
                 result = rowCountResult(sqlSession.insert(command.getName(), param));
                 break;
             }
             case UPDATE: {
-                Object param = method.convertArgsToSqlCommandParam(args);
+                Object param = this.convertArgsToSqlCommandParam(args);
                 result = rowCountResult(sqlSession.update(command.getName(), param));
                 break;
             }
             case DELETE: {
-                Object param = method.convertArgsToSqlCommandParam(args);
+                Object param = this.convertArgsToSqlCommandParam(args);
                 result = rowCountResult(sqlSession.delete(command.getName(), param));
                 break;
             }
@@ -83,7 +105,7 @@ public class MybatisMapperMethod {
                     if (IPage.class.isAssignableFrom(method.getReturnType())) {
                         result = executeForIPage(sqlSession, args);
                     } else {
-                        Object param = method.convertArgsToSqlCommandParam(args);
+                        Object param = this.convertArgsToSqlCommandParam(args);
                         result = sqlSession.selectOne(command.getName(), param);
                         if (method.returnsOptional()
                             && (result == null || !method.getReturnType().equals(result.getClass()))) {
@@ -115,7 +137,7 @@ public class MybatisMapperMethod {
             }
         }
         Assert.notNull(result, "can't found IPage for args!");
-        Object param = method.convertArgsToSqlCommandParam(args);
+        Object param = this.convertArgsToSqlCommandParam(args);
         List<E> list = sqlSession.selectList(command.getName(), param);
         result.setRecords(list);
         return result;
@@ -145,7 +167,7 @@ public class MybatisMapperMethod {
                 + " needs either a @ResultMap annotation, a @ResultType annotation,"
                 + " or a resultType attribute in XML so a ResultHandler can be used as a parameter.");
         }
-        Object param = method.convertArgsToSqlCommandParam(args);
+        Object param = this.convertArgsToSqlCommandParam(args);
         if (method.hasRowBounds()) {
             RowBounds rowBounds = method.extractRowBounds(args);
             sqlSession.select(command.getName(), param, rowBounds, method.extractResultHandler(args));
@@ -156,7 +178,7 @@ public class MybatisMapperMethod {
 
     private <E> Object executeForMany(SqlSession sqlSession, Object[] args) {
         List<E> result;
-        Object param = method.convertArgsToSqlCommandParam(args);
+        Object param = this.convertArgsToSqlCommandParam(args);
         if (method.hasRowBounds()) {
             RowBounds rowBounds = method.extractRowBounds(args);
             result = sqlSession.selectList(command.getName(), param, rowBounds);
@@ -176,7 +198,7 @@ public class MybatisMapperMethod {
 
     private <T> Cursor<T> executeForCursor(SqlSession sqlSession, Object[] args) {
         Cursor<T> result;
-        Object param = method.convertArgsToSqlCommandParam(args);
+        Object param = this.convertArgsToSqlCommandParam(args);
         if (method.hasRowBounds()) {
             RowBounds rowBounds = method.extractRowBounds(args);
             result = sqlSession.selectCursor(command.getName(), param, rowBounds);
@@ -208,7 +230,7 @@ public class MybatisMapperMethod {
 
     private <K, V> Map<K, V> executeForMap(SqlSession sqlSession, Object[] args) {
         Map<K, V> result;
-        Object param = method.convertArgsToSqlCommandParam(args);
+        Object param = this.convertArgsToSqlCommandParam(args);
         if (method.hasRowBounds()) {
             RowBounds rowBounds = method.extractRowBounds(args);
             result = sqlSession.selectMap(command.getName(), param, method.getMapKey(), rowBounds);
@@ -216,5 +238,24 @@ public class MybatisMapperMethod {
             result = sqlSession.selectMap(command.getName(), param, method.getMapKey());
         }
         return result;
+    }
+
+    private Object convertArgsToSqlCommandParam(Object[] args) {
+        if (args == null) {
+            return null;
+        }
+        if (null != wrapperParamsAliasNameMap) {
+            for (Map.Entry<Integer, String> entry : wrapperParamsAliasNameMap.entrySet()) {
+                Object arg = args[entry.getKey()];
+                if (arg instanceof AbstractWrapper) {
+                    AbstractWrapper<?, ?, ?> wrapper = (AbstractWrapper<?, ?, ?>) arg;
+                    String paramAlias = entry.getValue();
+                    if (!paramAlias.equals(wrapper.getParamAlias())) {
+                        wrapper.setParamAlias(paramAlias);
+                    }
+                }
+            }
+        }
+        return method.convertArgsToSqlCommandParam(args);
     }
 }

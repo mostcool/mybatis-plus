@@ -6,6 +6,7 @@ dependencies {
     api project(":mybatis-plus")
     api "org.mybatis:mybatis-spring:3.0.5"
     api project(":spring-boot-starter:mybatis-plus-spring-boot-autoconfigure")
+    api project(":spring-boot-starter:mybatis-plus-spring-boot-native-image")
     implementation platform("org.springframework.boot:spring-boot-dependencies:${springBoot3Version}")
     annotationProcessor "org.springframework.boot:spring-boot-autoconfigure-processor:${springBoot3Version}"
     annotationProcessor "org.springframework.boot:spring-boot-configuration-processor:${springBoot3Version}"
@@ -14,7 +15,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-configuration-processor"
     implementation "org.springframework.boot:spring-boot-autoconfigure-processor"
     implementation "${lib['mybatis-thymeleaf']}"
-    implementation "org.mybatis.scripting:mybatis-velocity:2.3.0"
+    implementation "org.mybatis.scripting:mybatis-velocity:2.3.1"
     implementation "${lib.'mybatis-freemarker'}"
     implementation "org.springframework.cloud:spring-cloud-commons:4.1.6"
     testImplementation "org.springframework.boot:spring-boot-starter-test"

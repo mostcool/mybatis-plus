@@ -2,7 +2,7 @@ package com.baomidou.mybatisplus.test.h2.service;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.extension.service.IService;
+import com.baomidou.mybatisplus.spring.service.IService;
 import com.baomidou.mybatisplus.test.h2.entity.H2User;
 
 import java.util.List;
@@ -45,6 +45,10 @@ public interface IH2UserService extends IService<H2User> {
     void testSaveBatchNoTransactional2();
 
     List<H2User> testCustomSqlSegment(Wrapper wrapper);
+
+    List<H2User> testWrapperSetAliasByParam(Wrapper wrapper);
+
+    List<H2User> testMultiWrapperQuery(Wrapper wrapper, Wrapper wrapper2);
 
     void testSaveOrUpdateTransactional1(List<H2User> users);
 

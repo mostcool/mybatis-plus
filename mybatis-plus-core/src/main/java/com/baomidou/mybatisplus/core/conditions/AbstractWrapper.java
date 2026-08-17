@@ -147,6 +147,17 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     @Override
+    public Children eqOrIsNull(boolean condition, R column, Object val) {
+        return maybeDo(condition, () -> {
+            if (StringUtils.checkValNotNull(val)) {
+                addCondition(true, column, EQ, val);
+            } else {
+                appendSqlSegments(columnToSqlSegment(column), IS_NULL);
+            }
+        });
+    }
+
+    @Override
     public Children ne(boolean condition, R column, Object val) {
         return addCondition(condition, column, NE, val);
     }
@@ -203,14 +214,20 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     @Override
     public Children between(boolean condition, R column, Object val1, Object val2) {
-        return maybeDo(condition, () -> appendSqlSegments(columnToSqlSegment(column), BETWEEN,
-            () -> formatParam(null, val1), AND, () -> formatParam(null, val2)));
+        return maybeDo(condition, () -> {
+            String mapping = columnToMapping(column);
+            appendSqlSegments(columnToSqlSegment(column), BETWEEN,
+                () -> formatParam(mapping, val1), AND, () -> formatParam(mapping, val2));
+        });
     }
 
     @Override
     public Children notBetween(boolean condition, R column, Object val1, Object val2) {
-        return maybeDo(condition, () -> appendSqlSegments(columnToSqlSegment(column), NOT_BETWEEN,
-            () -> formatParam(null, val1), AND, () -> formatParam(null, val2)));
+        return maybeDo(condition, () -> {
+            String mapping = columnToMapping(column);
+            appendSqlSegments(columnToSqlSegment(column), NOT_BETWEEN,
+                () -> formatParam(mapping, val1), AND, () -> formatParam(mapping, val2));
+        });
     }
 
     @Override
@@ -269,8 +286,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     @Override
     public Children exists(boolean condition, String existsSql, Object... values) {
-        return maybeDo(condition, () -> appendSqlSegments(EXISTS,
-            () -> String.format("(%s)", formatSqlMaybeWithParam(existsSql, values))));
+        return maybeDo(condition, () -> appendSqlSegments(EXISTS, () -> "(" + formatSqlMaybeWithParam(existsSql, values) + ")"));
     }
 
     @Override
@@ -290,12 +306,12 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
 
     @Override
     public Children in(boolean condition, R column, Collection<?> coll) {
-        return maybeDo(condition, () -> appendSqlSegments(columnToSqlSegment(column), IN, inExpression(coll)));
+        return maybeDo(condition, () -> appendSqlSegments(columnToSqlSegment(column), IN, inExpression(coll, columnToMapping(column))));
     }
 
     @Override
     public Children in(boolean condition, R column, Object... values) {
-        return maybeDo(condition, () -> appendSqlSegments(columnToSqlSegment(column), IN, inExpression(values)));
+        return maybeDo(condition, () -> appendSqlSegments(columnToSqlSegment(column), IN, inExpression(values, columnToMapping(column))));
     }
 
     @Override
@@ -311,43 +327,43 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     @Override
     public Children eqSql(boolean condition, R column, String eqValue) {
         return maybeDo(condition, () -> appendSqlSegments(columnToSqlSegment(column), EQ,
-            () -> String.format("(%s)", eqValue)));
+            () -> "(" + eqValue + ")"));
     }
 
     @Override
     public Children inSql(boolean condition, R column, String inValue) {
         return maybeDo(condition, () -> appendSqlSegments(columnToSqlSegment(column), IN,
-            () -> String.format("(%s)", inValue)));
+            () -> "(" + inValue + ")"));
     }
 
     @Override
     public Children gtSql(boolean condition, R column, String inValue) {
         return maybeDo(condition, () -> appendSqlSegments(columnToSqlSegment(column), GT,
-            () -> String.format("(%s)", inValue)));
+            () -> "(" + inValue + ")"));
     }
 
     @Override
     public Children geSql(boolean condition, R column, String inValue) {
         return maybeDo(condition, () -> appendSqlSegments(columnToSqlSegment(column), GE,
-            () -> String.format("(%s)", inValue)));
+            () -> "(" + inValue + ")"));
     }
 
     @Override
     public Children ltSql(boolean condition, R column, String inValue) {
         return maybeDo(condition, () -> appendSqlSegments(columnToSqlSegment(column), LT,
-            () -> String.format("(%s)", inValue)));
+            () -> "(" + inValue + ")"));
     }
 
     @Override
     public Children leSql(boolean condition, R column, String inValue) {
         return maybeDo(condition, () -> appendSqlSegments(columnToSqlSegment(column), LE,
-            () -> String.format("(%s)", inValue)));
+            () -> "(" + inValue + ")"));
     }
 
     @Override
     public Children notInSql(boolean condition, R column, String inValue) {
         return maybeDo(condition, () -> appendSqlSegments(columnToSqlSegment(column), NOT_IN,
-            () -> String.format("(%s)", inValue)));
+            () -> "(" + inValue + ")"));
     }
 
     @Override
@@ -452,7 +468,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      */
     protected Children likeValue(boolean condition, SqlKeyword keyword, R column, Object val, SqlLike sqlLike) {
         return maybeDo(condition, () -> appendSqlSegments(columnToSqlSegment(column), keyword,
-            () -> formatParam(null, SqlUtils.concatLike(val, sqlLike))));
+            () -> formatParam(columnToMapping(column), SqlUtils.concatLike(val, sqlLike))));
     }
 
     /**
@@ -465,7 +481,7 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      */
     protected Children addCondition(boolean condition, R column, SqlKeyword sqlKeyword, Object val) {
         return maybeDo(condition, () -> appendSqlSegments(columnToSqlSegment(column), sqlKeyword,
-            () -> formatParam(null, val)));
+            () -> formatParam(columnToMapping(column), val)));
     }
 
     /**
@@ -553,10 +569,14 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * @param value 集合
      */
     protected ISqlSegment inExpression(Collection<?> value) {
+        return inExpression(value, null);
+    }
+
+    protected ISqlSegment inExpression(Collection<?> value, String mapping) {
         if (CollectionUtils.isEmpty(value)) {
             return () -> "()";
         }
-        return () -> value.stream().map(i -> formatParam(null, i))
+        return () -> value.stream().map(i -> formatParam(mapping, i))
             .collect(joining(StringPool.COMMA, StringPool.LEFT_BRACKET, StringPool.RIGHT_BRACKET));
     }
 
@@ -566,10 +586,14 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      * @param values 数组
      */
     protected ISqlSegment inExpression(Object[] values) {
+        return inExpression(values, null);
+    }
+
+    protected ISqlSegment inExpression(Object[] values, String mapping) {
         if (ArrayUtils.isEmpty(values)) {
             return () -> "()";
         }
-        return () -> Arrays.stream(values).map(i -> formatParam(null, i))
+        return () -> Arrays.stream(values).map(i -> formatParam(mapping, i))
             .collect(joining(StringPool.COMMA, StringPool.LEFT_BRACKET, StringPool.RIGHT_BRACKET));
     }
 
@@ -650,18 +674,30 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
     }
 
     /**
-     * 参数别名设置，初始化时优先设置该值、重复设置异常
+     * 参数别名设置，初始化时优先设置该值
      *
      * @param paramAlias 参数别名
      * @return Children
      */
-    @SuppressWarnings("unused")
     public Children setParamAlias(String paramAlias) {
         Assert.notEmpty(paramAlias, "paramAlias can not be empty!");
-        Assert.isEmpty(paramNameValuePairs, "Please call this method before working!");
-        Assert.isNull(this.paramAlias, "Please do not call the method repeatedly!");
+        String oldParamAlias = getParamAlias();
         this.paramAlias = new SharedString(paramAlias);
+        if (this.expression != null && !oldParamAlias.equals(paramAlias)) {
+            expression.changeParamAlias(oldParamAlias, paramAlias);
+            onParamAliasChanged(oldParamAlias, paramAlias);
+        }
         return typedThis;
+    }
+
+    /**
+     * 参数别名变化后的扩展处理
+     *
+     * @param oldParamAlias 原参数别名
+     * @param paramAlias    新参数别名
+     */
+    protected void onParamAliasChanged(String oldParamAlias, String paramAlias) {
+        // do nothing
     }
 
     /**
@@ -676,6 +712,10 @@ public abstract class AbstractWrapper<T, R, Children extends AbstractWrapper<T, 
      */
     protected String columnToString(R column) {
         return (String) column;
+    }
+
+    protected String columnToMapping(R column) {
+        return null;
     }
 
     /**

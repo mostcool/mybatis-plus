@@ -21,14 +21,12 @@ import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.baomidou.mybatisplus.core.enums.SqlMethod;
-import com.baomidou.mybatisplus.core.injector.methods.SelectList;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.metadata.MapperProxyMetadata;
 import com.baomidou.mybatisplus.core.metadata.TableInfo;
 import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import com.baomidou.mybatisplus.core.toolkit.*;
 import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.SelectProvider;
 import org.apache.ibatis.cursor.Cursor;
 import org.apache.ibatis.exceptions.TooManyResultsException;
 import org.apache.ibatis.executor.BatchResult;
@@ -37,13 +35,8 @@ import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.SqlSession;
 import org.apache.ibatis.session.SqlSessionFactory;
 
-import java.io.IOException;
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.BiPredicate;
 
 /*
@@ -134,7 +127,8 @@ public interface BaseMapper<T> extends Mapper<T> {
             Assert.notNull(tableInfo, "Can not get TableInfo for entity " + entityClass);
             String keyProperty = tableInfo.getKeyProperty();
             Assert.notEmpty(keyProperty, "The current table has no primary key.");
-            if (tableInfo.isWithLogicDelete() && tableInfo.isWithUpdateFill()) {
+            if (tableInfo.isWithLogicDelete() && tableInfo.isWithUpdateFill()
+                && !tableInfo.getLogicDeleteFieldInfo().isWithUpdateFill()) {
                 T instance = tableInfo.newInstance();
                 tableInfo.setPropertyValue(instance, keyProperty, OgnlOps.convertValue(obj, tableInfo.getKeyType()));
                 return this.deleteById(instance);
@@ -326,7 +320,7 @@ public interface BaseMapper<T> extends Mapper<T> {
      *
      * @param queryWrapper 实体对象封装操作类（可以为 null）
      */
-    default T selectOne(@Param(Constants.WRAPPER) Wrapper<T> queryWrapper) {
+    default T selectOne(Wrapper<T> queryWrapper) {
         return this.selectOne(queryWrapper, true);
     }
 
@@ -337,20 +331,16 @@ public interface BaseMapper<T> extends Mapper<T> {
      * @param queryWrapper 实体对象封装操作类（可以为 null）
      * @param throwEx      boolean 参数，为true如果存在多个结果直接抛出异常
      */
-    default T selectOne(@Param(Constants.WRAPPER) Wrapper<T> queryWrapper, boolean throwEx) {
-        MapperProxyMetadata mapperProxyMetadata = MybatisUtils.getMapperProxy(this);
-        SqlSession sqlSession = mapperProxyMetadata.getSqlSession();
-        // 使用游标方式查询
-        try (Cursor<T> cursor = sqlSession.selectCursor(mapperProxyMetadata.getMapperInterface().getName() + Constants.DOT +
-            Constants.SELECT_WITH_CURSOR, queryWrapper)) {
-            for (T obj : cursor) {
-                // 只返回一条数据
-                return obj;
-            }
-        } catch (IOException e) {
+    default T selectOne(Wrapper<T> queryWrapper, boolean throwEx) {
+        List<T> list = this.selectList(queryWrapper);
+        int size = list.size();
+        if (size == 1) {
+            return list.get(0);
+        } else if (size > 1) {
             if (throwEx) {
-                throw new RuntimeException(e);
+                throw new TooManyResultsException("Expected one result (or null) to be returned by selectOne(), but found: " + size);
             }
+            return list.get(0);
         }
         return null;
     }
@@ -361,7 +351,6 @@ public interface BaseMapper<T> extends Mapper<T> {
      *
      * @param queryWrapper 实体对象封装操作类（可以为 null）
      */
-    @SelectProvider(type = SelectList.class, method = Constants.SELECT_WITH_CURSOR)
     Cursor<T> selectWithCursor(@Param(Constants.WRAPPER) Wrapper<T> queryWrapper);
 
     /**

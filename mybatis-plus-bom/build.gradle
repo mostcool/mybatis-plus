@@ -4,7 +4,7 @@ buildscript {
         maven { url "https://repo.spring.io/plugins-release" }
     }
     dependencies {
-        classpath "io.spring.gradle:dependency-management-plugin:1.1.6"
+        classpath "io.spring.gradle:dependency-management-plugin:1.1.7"
     }
 }
 
@@ -22,6 +22,7 @@ dependencyManagement {
         dependency "com.baomidou:mybatis-plus-boot-starter-test:${APP_VERSION}"
         dependency "com.baomidou:mybatis-plus-spring-boot-autoconfigure:${APP_VERSION}"
         dependency "com.baomidou:mybatis-plus-spring-boot-test-autoconfigure:${APP_VERSION}"
+        dependency "com.baomidou:mybatis-plus-spring-boot-native-image:${APP_VERSION}"
         dependency "com.baomidou:mybatis-plus-spring-boot3-starter:${APP_VERSION}"
         dependency "com.baomidou:mybatis-plus-spring-boot3-starter-test:${APP_VERSION}"
         dependency "com.baomidou:mybatis-plus-spring-boot4-starter:${APP_VERSION}"

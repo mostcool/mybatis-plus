@@ -83,12 +83,21 @@ public class DeleteByIds extends AbstractMethod {
             .filter(TableFieldInfo::isWithUpdateFill)
             .filter(f -> !f.isLogicDelete())
             .collect(toList());
+        TableFieldInfo logicDeleteField = tableInfo.getLogicDeleteFieldInfo();
+        boolean logicDeleteWithFill = logicDeleteField != null && logicDeleteField.isWithUpdateFill();
         String sqlSet = "SET ";
         if (CollectionUtils.isNotEmpty(fieldInfos)) {
             sqlSet += SqlScriptUtils.convertIf(fieldInfos.stream()
                 .map(i -> i.getSqlSet(Constants.MP_FILL_ET + StringPool.DOT)).collect(joining(EMPTY)), String.format("%s != null", Constants.MP_FILL_ET), true);
         }
-        sqlSet += StringPool.EMPTY + tableInfo.getLogicDeleteSql(false, false);
+        if (logicDeleteWithFill) {
+            String fillSql = logicDeleteField.getSqlSet(true, Constants.MP_FILL_ET + StringPool.DOT);
+            fillSql = fillSql.substring(0, fillSql.length() - COMMA.length());
+            String whenCondition = String.format("%s != null", Constants.MP_FILL_ET);
+            sqlSet += SqlScriptUtils.convertChoose(whenCondition, fillSql, tableInfo.getLogicDeleteSql(false, false));
+        } else {
+            sqlSet += StringPool.EMPTY + tableInfo.getLogicDeleteSql(false, false);
+        }
         return sqlMethod.format(tableInfo.getTableName(), sqlSet, tableInfo.getKeyColumn(),
             getConvertForeachScript(tableInfo), tableInfo.getLogicDeleteSql(true, true));
     }

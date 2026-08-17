@@ -24,6 +24,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.generator.DefaultTableAnnotationHandler;
 import com.baomidou.mybatisplus.generator.DefaultTableFieldAnnotationHandler;
 import com.baomidou.mybatisplus.generator.IFill;
+import com.baomidou.mybatisplus.generator.ITableFieldMetaInfoCustomizer;
 import com.baomidou.mybatisplus.generator.ITableAnnotationHandler;
 import com.baomidou.mybatisplus.generator.ITableFieldAnnotationHandler;
 import com.baomidou.mybatisplus.generator.ITemplate;
@@ -190,6 +191,14 @@ public class Entity implements ITemplate {
      * 表填充字段
      */
     private final List<IFill> tableFillList = new ArrayList<>();
+
+    /**
+     * Field meta info customizers.
+     *
+     * @since 3.5.18
+     */
+    @Getter
+    private ITableFieldMetaInfoCustomizer tableFieldMetaInfoCustomizer;
 
     /**
      * 数据库表映射到实体的命名策略，默认下划线转驼峰命名
@@ -448,6 +457,8 @@ public class Entity implements ITemplate {
                 }
             });
         }
+        tableInfo.getFields().forEach(tableField -> tableField.getAnnotationAttributesList()
+            .forEach(attributes -> importPackages.addAll(attributes.getImportPackages())));
         data.put("entityFieldUseJavaDoc", fieldUseJavaDoc);
         data.put("entityClassAnnotations", annotationAttributesFunction != null ? annotationAttributesFunction.apply(classAnnotationAttributes) :
             classAnnotationAttributes.stream().sorted(Comparator.comparingInt(s -> s.getDisplayName().length())).collect(Collectors.toList()));
@@ -461,6 +472,19 @@ public class Entity implements ITemplate {
             frameworkPackages.stream().sorted().collect(Collectors.toList()));
         data.put("entityToString", this.toString);
         return data;
+    }
+
+    /**
+     * Customize field meta info.
+     *
+     * @param tableInfo current table info
+     * @param tableField current table field
+     * @since 3.5.18
+     */
+    public void handleTableFieldMetaInfo(@NotNull TableInfo tableInfo, @NotNull com.baomidou.mybatisplus.generator.config.po.TableField tableField) {
+        if (null != tableFieldMetaInfoCustomizer) {
+            tableFieldMetaInfoCustomizer.customize(tableInfo, tableField);
+        }
     }
 
     public static class Builder extends BaseBuilder {
@@ -731,6 +755,23 @@ public class Entity implements ITemplate {
          */
         public Builder addTableFills(@NotNull List<IFill> tableFillList) {
             this.entity.tableFillList.addAll(tableFillList);
+            return this;
+        }
+
+        /**
+         * Customize table field metadata after type conversion and before property-name conversion,
+         * annotation handling, import collection, and template rendering.
+         * <p>
+         * This is useful for special database types or custom value objects that need to adjust
+         * {@link com.baomidou.mybatisplus.generator.config.po.TableField.MetaInfo} and the field column
+         * type before generated entity templates consume the field.
+         *
+         * @param tableFieldMetaInfoCustomizer table field meta info customizer
+         * @return this
+         * @since 3.5.18
+         */
+        public Builder tableFieldMetaInfoCustomizer(@NotNull ITableFieldMetaInfoCustomizer tableFieldMetaInfoCustomizer) {
+            this.entity.tableFieldMetaInfoCustomizer = tableFieldMetaInfoCustomizer;
             return this;
         }
 

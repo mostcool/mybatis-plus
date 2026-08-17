@@ -23,6 +23,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Constants;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.sql.SqlInjectionUtils;
+import com.baomidou.mybatisplus.core.toolkit.sql.SqlUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -116,16 +117,12 @@ public class UpdateWrapper<T> extends AbstractWrapper<T, String, UpdateWrapper<T
 
     @Override
     public UpdateWrapper<T> setIncrBy(boolean condition, String column, Number val) {
-        return maybeDo(condition, () -> {
-            sqlSet.add(String.format("%s=%s + %s", column, column, val instanceof BigDecimal ? ((BigDecimal) val).toPlainString() : val));
-        });
+        return maybeDo(condition, () -> sqlSet.add(SqlUtils.selfOperation(column, true, val)));
     }
 
     @Override
     public UpdateWrapper<T> setDecrBy(boolean condition, String column, Number val) {
-        return maybeDo(condition, () -> {
-            sqlSet.add(String.format("%s=%s - %s", column, column, val instanceof BigDecimal ? ((BigDecimal) val).toPlainString() : val));
-        });
+        return maybeDo(condition, () -> sqlSet.add(SqlUtils.selfOperation(column, false, val)));
     }
 
     /**
@@ -140,6 +137,16 @@ public class UpdateWrapper<T> extends AbstractWrapper<T, String, UpdateWrapper<T
     protected UpdateWrapper<T> instance() {
         return new UpdateWrapper<>(getEntity(), null, paramNameSeq, paramNameValuePairs, new MergeSegments(),
             paramAlias, SharedString.emptyString(), SharedString.emptyString(), SharedString.emptyString());
+    }
+
+    @Override
+    protected void onParamAliasChanged(String oldParamAlias, String paramAlias) {
+        if (sqlSet == null) {
+            return;
+        }
+        String oldPrefix = "#{" + oldParamAlias + Constants.WRAPPER_PARAM_MIDDLE;
+        String newPrefix = "#{" + paramAlias + Constants.WRAPPER_PARAM_MIDDLE;
+        sqlSet.replaceAll(sql -> sql.replace(oldPrefix, newPrefix));
     }
 
     @Override

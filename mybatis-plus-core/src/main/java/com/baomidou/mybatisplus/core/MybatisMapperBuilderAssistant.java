@@ -53,20 +53,9 @@ public class MybatisMapperBuilderAssistant extends MapperBuilderAssistant {
                                             Class<? extends TypeHandler<?>> typeHandler, List<ResultFlag> flags, String resultSet, String foreignColumn,
                                             boolean lazy) {
         Class<?> javaTypeClass = resolveResultJavaType(resultType, property, javaType);
-        TypeHandler<?> typeHandlerInstance = null;
-        if (typeHandler != null) {
-            if (IJsonTypeHandler.class.isAssignableFrom(typeHandler)) {
-                try {
-                    Field field = resultType.getDeclaredField(property);
-                    typeHandlerInstance = MybatisUtils.newJsonTypeHandler(typeHandler, javaTypeClass, field);
-                } catch (NoSuchFieldException e) {
-                    //ignore 降级兼容处理
-                    typeHandlerInstance = resolveTypeHandler(javaTypeClass, typeHandler);
-                }
-            } else {
-                typeHandlerInstance = resolveTypeHandler(javaTypeClass, typeHandler);
-            }
-        }
+        // 新增自定义 IJsonTypeHandler 处理能力
+        TypeHandler<?> typeHandlerInstance = MybatisUtils.resolveTypeHandler(resultType, property, typeHandler, javaTypeClass,
+            () -> this.resolveTypeHandler(javaTypeClass, typeHandler));
         List<ResultMapping> composites;
         if ((nestedSelect == null || nestedSelect.isEmpty()) && (foreignColumn == null || foreignColumn.isEmpty())) {
             composites = Collections.emptyList();
